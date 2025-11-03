@@ -1,9 +1,7 @@
-import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, FileText, Users, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getCompany } from '@/services/dataService';
-import { useCompanyId } from '@/hooks/useCompanyId';
+import { useCompanyData } from '@/contexts/CompanyDataContext';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -13,17 +11,7 @@ import { cn } from '@/lib/utils';
 const Sidebar = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
-  const { companyId, loading: loadingCompanyId } = useCompanyId();
-  const [company, setCompany] = useState(null);
-
-  useEffect(() => {
-    const fetchCompany = async () => {
-      if (loadingCompanyId || !companyId) return;
-      const data = await getCompany(companyId);
-      setCompany(data);
-    };
-    fetchCompany();
-  }, [companyId, loadingCompanyId]);
+  const { company } = useCompanyData();
 
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },

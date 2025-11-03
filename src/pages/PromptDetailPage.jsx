@@ -1,31 +1,17 @@
-import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getPromptById, getDataSource } from '@/services/dataService';
-import { useCompanyId } from '@/hooks/useCompanyId';
+import { useCompanyData } from '@/contexts/CompanyDataContext';
+import { getDataSource } from '@/services/dataService';
 import PromptDetail from '@/components/prompts/PromptDetail';
 
 const PromptDetailPage = () => {
   const { id } = useParams();
-  const { companyId, loading: loadingCompanyId } = useCompanyId();
-  const [prompt, setPrompt] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { prompts, loading } = useCompanyData();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (loadingCompanyId) return;
-
-      setLoading(true);
-      if (companyId) {
-        const data = await getPromptById(companyId, id);
-        setPrompt(data);
-      }
-      setLoading(false);
-    };
-    fetchData();
-  }, [id, companyId, loadingCompanyId]);
+  // Find the prompt from cached data
+  const prompt = prompts.find(p => p.id === id);
 
   if (loading) {
     return (

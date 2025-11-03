@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getCompanyPrompts, getDataSource } from '@/services/dataService';
-import { useCompanyId } from '@/hooks/useCompanyId';
+import { useCompanyData } from '@/contexts/CompanyDataContext';
+import { getDataSource } from '@/services/dataService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -15,23 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Minus, Database } from 'lucide-react';
 
 const Prompts = () => {
-  const { companyId, loading: loadingCompanyId } = useCompanyId();
-  const [prompts, setPrompts] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (loadingCompanyId) return;
-
-      setLoading(true);
-      if (companyId) {
-        const data = await getCompanyPrompts(companyId);
-        setPrompts(data);
-      }
-      setLoading(false);
-    };
-    fetchData();
-  }, [companyId, loadingCompanyId]);
+  const { prompts, loading } = useCompanyData();
 
   const getTrendIcon = (trend) => {
     switch (trend) {

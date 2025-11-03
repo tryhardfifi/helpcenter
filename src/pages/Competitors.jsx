@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
-import { getCompany, getDataSource } from '@/services/dataService';
-import { useCompanyId } from '@/hooks/useCompanyId';
+import { useCompanyData } from '@/contexts/CompanyDataContext';
+import { getDataSource } from '@/services/dataService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -15,27 +14,10 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { Database } from 'lucide-react';
 
 const Competitors = () => {
-  const { companyId, loading: loadingCompanyId } = useCompanyId();
-  const [analytics, setAnalytics] = useState(null);
-  const [competitors, setCompetitors] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { company, loading } = useCompanyData();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (loadingCompanyId) return;
-
-      setLoading(true);
-      if (companyId) {
-        const company = await getCompany(companyId);
-        if (company) {
-          setAnalytics(company.analytics);
-          setCompetitors(company.competitors);
-        }
-      }
-      setLoading(false);
-    };
-    fetchData();
-  }, [companyId, loadingCompanyId]);
+  const analytics = company?.analytics;
+  const competitors = company?.competitors || [];
 
   if (loading) {
     return (
