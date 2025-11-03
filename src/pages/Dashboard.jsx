@@ -89,6 +89,7 @@ const Dashboard = () => {
           trend="up"
           onClick={() => setActiveKPI('visibilityScore')}
           isActive={activeKPI === 'visibilityScore'}
+          info="The visibility score is calculated from the % of prompts you rank, the average probability for you to appear and the position of your business compared to your competitors. It helps compare the overall AI visibility between you and your competitors."
         />
         <MetricCard
           title="Mention Rate"
@@ -97,14 +98,16 @@ const Dashboard = () => {
           trend="up"
           onClick={() => setActiveKPI('mentionRate')}
           isActive={activeKPI === 'mentionRate'}
+          info="The share of prompts that your business can appear in."
         />
         <MetricCard
-          title="Avg. Probability"
+          title="Probability to Appear"
           value={analytics.metrics.avgProbability}
           suffix="%"
           trend="up"
           onClick={() => setActiveKPI('avgProbability')}
           isActive={activeKPI === 'avgProbability'}
+          info="For the prompts that your business does appear in, how likely it is to show up. This is because AI never responds the exact same way, so you might sometimes appear and sometimes not. If this number is higher, it means your business is more of a leader in your niche."
         />
         <MetricCard
           title="Avg. Rank"
