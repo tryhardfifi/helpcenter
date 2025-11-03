@@ -11,9 +11,24 @@ export const mockCompanyData = {
     industry: "B2B SaaS",
     createdAt: "2024-01-01",
     subscription: {
-      plan: "pro", // "free" or "pro"
+      plan: "growth", // "starter", "growth", or "enterprise"
       status: "active",
-      price: 100,
+      price: 399,
+      billingPeriod: "monthly",
+      startDate: "2024-01-01",
+      nextBillingDate: "2024-12-01",
+      limits: {
+        answerEngines: 5,
+        promptsTracked: 100,
+        articlesPerMonth: 6,
+        competitorsTracked: 3,
+      },
+      features: {
+        advancedAnalytics: true,
+        prioritySupport: true,
+        exportData: true,
+        apiAccess: false,
+      },
     },
     competitors: [
       { id: "comp-1", name: "CompetitorCo" },
@@ -220,6 +235,63 @@ export const mockCompanyData = {
       mentions: 89,
       impact: "high",
       topics: ["AI", "Collaboration", "Productivity"],
+      content: `# The Future of Team Collaboration: AI-Powered Solutions
+
+In today's rapidly evolving workplace, artificial intelligence is reshaping how teams collaborate and communicate. At **Acme Inc.**, we've been at the forefront of this transformation.
+
+## The Challenge
+
+Traditional collaboration tools often create information silos and communication bottlenecks. Teams struggle with:
+
+- Scattered information across multiple platforms
+- Difficulty finding relevant context
+- Time wasted on repetitive coordination tasks
+- Lack of intelligent insights from team data
+
+## Our AI-Powered Approach
+
+Acme Inc. has developed a suite of AI-powered collaboration features that address these challenges head-on:
+
+### 1. Intelligent Context Search
+Our AI understands the context of your work and surfaces relevant information exactly when you need it.
+
+### 2. Automated Workflow Coordination
+Let AI handle the routine coordination tasks, freeing your team to focus on creative problem-solving.
+
+### 3. Smart Meeting Summaries
+Automatically generated summaries capture key decisions and action items from every meeting.
+
+## Results
+
+Companies using our AI-powered collaboration tools report:
+- **40% reduction** in time spent searching for information
+- **30% increase** in team productivity
+- **50% fewer** unnecessary meetings
+
+## Looking Ahead
+
+The future of collaboration is intelligent, seamless, and human-centric. We're excited to continue innovating in this space.`,
+      analytics: {
+        mentionsOverTime: [
+          { date: "Jan", mentions: 12 },
+          { date: "Feb", mentions: 15 },
+          { date: "Mar", mentions: 18 },
+          { date: "Apr", mentions: 16 },
+          { date: "May", mentions: 14 },
+          { date: "Jun", mentions: 14 },
+        ],
+        sentimentBreakdown: {
+          positive: 72,
+          neutral: 23,
+          negative: 5,
+        },
+        topQueries: [
+          "best collaboration tools for remote teams",
+          "AI-powered project management",
+          "team productivity software",
+        ],
+        averageRanking: 2.3,
+      },
     },
     {
       id: "article-2",
@@ -231,6 +303,60 @@ export const mockCompanyData = {
       mentions: 67,
       impact: "medium",
       topics: ["Project Management", "Case Study"],
+      content: `# How Acme Inc. Revolutionized Project Management
+
+Project management has long been plagued by complexity, inefficiency, and poor visibility. Here's how we changed the game.
+
+## The Old Way
+
+Traditional project management tools were built for a different era:
+- Complex interfaces requiring extensive training
+- Limited real-time collaboration
+- Poor integration with existing workflows
+- Lack of actionable insights
+
+## The Acme Revolution
+
+We took a radically different approach, focusing on three core principles:
+
+### Simplicity First
+Every feature is designed to be intuitive from day one. No manuals required.
+
+### Real-Time Everything
+See changes as they happen. Collaborate without friction.
+
+### Intelligence Built-In
+AI-powered insights help you make better decisions faster.
+
+## Customer Success
+
+One enterprise customer reported completing projects **25% faster** after switching to Acme Inc.
+
+> "Acme Inc. transformed how our team works. Projects that used to take months now take weeks." - Fortune 500 CTO
+
+## Try It Yourself
+
+Experience the revolution. Start your free trial today.`,
+      analytics: {
+        mentionsOverTime: [
+          { date: "Feb", mentions: 8 },
+          { date: "Mar", mentions: 12 },
+          { date: "Apr", mentions: 14 },
+          { date: "May", mentions: 16 },
+          { date: "Jun", mentions: 17 },
+        ],
+        sentimentBreakdown: {
+          positive: 68,
+          neutral: 28,
+          negative: 4,
+        },
+        topQueries: [
+          "project management case studies",
+          "enterprise project management tools",
+          "best PM software for large teams",
+        ],
+        averageRanking: 3.1,
+      },
     },
     {
       id: "article-3",
@@ -242,6 +368,63 @@ export const mockCompanyData = {
       mentions: 54,
       impact: "medium",
       topics: ["AI", "Business Intelligence", "Analytics"],
+      content: `# 10 Ways AI is Transforming Business Intelligence
+
+Business intelligence is undergoing a fundamental transformation thanks to artificial intelligence. Here are the top 10 ways AI is changing the game.
+
+## 1. Predictive Analytics
+Move beyond historical reporting to predict future trends with machine learning models.
+
+## 2. Natural Language Queries
+Ask questions in plain English and get instant insights from your data.
+
+## 3. Automated Data Preparation
+AI handles the tedious work of cleaning and preparing data for analysis.
+
+## 4. Anomaly Detection
+Spot unusual patterns and potential issues before they become problems.
+
+## 5. Personalized Dashboards
+AI learns what metrics matter to you and surfaces them automatically.
+
+## 6. Intelligent Alerts
+Get notified only about changes that truly matter to your business.
+
+## 7. Advanced Visualization
+AI suggests the best way to visualize your data for maximum insight.
+
+## 8. Competitive Intelligence
+Monitor competitors and market trends automatically.
+
+## 9. Revenue Forecasting
+More accurate predictions powered by machine learning.
+
+## 10. Customer Behavior Analysis
+Understand customer patterns at scale with AI-powered segmentation.
+
+## The Future is Here
+
+At Acme Inc., we're building these capabilities into our platform. The future of BI is intelligent, automated, and accessible to everyone.`,
+      analytics: {
+        mentionsOverTime: [
+          { date: "Feb", mentions: 6 },
+          { date: "Mar", mentions: 9 },
+          { date: "Apr", mentions: 11 },
+          { date: "May", mentions: 13 },
+          { date: "Jun", mentions: 15 },
+        ],
+        sentimentBreakdown: {
+          positive: 65,
+          neutral: 30,
+          negative: 5,
+        },
+        topQueries: [
+          "AI business intelligence tools",
+          "predictive analytics software",
+          "automated BI platforms",
+        ],
+        averageRanking: 3.8,
+      },
     },
     {
       id: "article-4",
@@ -253,6 +436,73 @@ export const mockCompanyData = {
       mentions: 45,
       impact: "low",
       topics: ["Case Study", "Enterprise", "Customer Success"],
+      content: `# Customer Success Stories: Enterprise Edition
+
+Real results from real enterprises using Acme Inc.
+
+## Fortune 500 Financial Services
+
+**Challenge:** Managing complex projects across 50+ global teams
+
+**Solution:** Implemented Acme Inc. enterprise platform with custom workflows
+
+**Results:**
+- 35% faster project completion
+- 60% reduction in coordination overhead
+- 99.9% platform uptime
+
+## Global Manufacturing Leader
+
+**Challenge:** Siloed data preventing cross-functional collaboration
+
+**Solution:** Unified all teams on Acme Inc. with integrated analytics
+
+**Results:**
+- Single source of truth for all project data
+- 40% improvement in on-time delivery
+- $2M annual cost savings
+
+## Tech Unicorn Startup
+
+**Challenge:** Scaling team collaboration from 50 to 500 employees
+
+**Solution:** Acme Inc. enterprise with SSO and advanced security
+
+**Results:**
+- Seamless scaling with zero downtime
+- Maintained startup agility at enterprise scale
+- 95% employee adoption rate
+
+## Why Enterprises Choose Acme Inc.
+
+✓ Enterprise-grade security and compliance
+✓ Unlimited scalability
+✓ Dedicated support team
+✓ Custom integrations
+✓ Advanced analytics and reporting
+
+## Get Started
+
+Contact our enterprise team to learn how Acme Inc. can transform your organization.`,
+      analytics: {
+        mentionsOverTime: [
+          { date: "Mar", mentions: 5 },
+          { date: "Apr", mentions: 8 },
+          { date: "May", mentions: 13 },
+          { date: "Jun", mentions: 19 },
+        ],
+        sentimentBreakdown: {
+          positive: 78,
+          neutral: 20,
+          negative: 2,
+        },
+        topQueries: [
+          "enterprise collaboration case studies",
+          "large company project management",
+          "enterprise software success stories",
+        ],
+        averageRanking: 4.2,
+      },
     },
   ],
 };

@@ -71,8 +71,8 @@ const Sidebar = () => {
             <p className="text-sm font-medium truncate">
               {user?.email || 'User'}
             </p>
-            <p className="text-xs text-muted-foreground">
-              {company.subscription.plan === 'pro' ? 'Pro Plan' : 'Free Plan'}
+            <p className="text-xs text-muted-foreground capitalize">
+              {company.subscription.plan} Plan
             </p>
           </div>
         </div>

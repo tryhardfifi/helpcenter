@@ -9,6 +9,7 @@ import Competitors from './pages/Competitors';
 import Prompts from './pages/Prompts';
 import PromptDetailPage from './pages/PromptDetailPage';
 import Articles from './pages/Articles';
+import ArticleDetailPage from './pages/ArticleDetailPage';
 import AppLayout from './components/layout/AppLayout';
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
             <Route path="/prompts" element={<Prompts />} />
             <Route path="/prompts/:id" element={<PromptDetailPage />} />
             <Route path="/articles" element={<Articles />} />
+            <Route path="/articles/:id" element={<ArticleDetailPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
