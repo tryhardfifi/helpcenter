@@ -11,6 +11,7 @@ import Competitors from './pages/Competitors';
 import Prompts from './pages/Prompts';
 import PromptDetailPage from './pages/PromptDetailPage';
 import Settings from './pages/Settings';
+import Sources from './pages/Sources';
 import AppLayout from './components/layout/AppLayout';
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
                 <Route path="/competitors" element={<Competitors />} />
                 <Route path="/prompts" element={<Prompts />} />
                 <Route path="/prompts/:id" element={<PromptDetailPage />} />
+                <Route path="/sources" element={<Sources />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>
             </Routes>
