@@ -1,10 +1,16 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, Users, LogOut, Building2, Globe } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, LogOut, Building2, Globe, ChevronDown, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanyData } from '@/contexts/CompanyDataContext';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import DataSourceToggle from '@/components/ui/DataSourceToggle';
 import { cn } from '@/lib/utils';
 
@@ -65,44 +71,38 @@ const Sidebar = () => {
       <div className="p-4 space-y-4">
         <DataSourceToggle />
 
-        <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
-          <div className="flex items-center gap-2 text-xs">
-            <Building2 className="h-4 w-4" />
-            <span className="font-medium">Company</span>
-          </div>
-          <button
-            onClick={() => navigate('/settings')}
-            className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
-          >
-            Settings
-          </button>
-        </div>
-
         <Separator />
 
-        <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              {user?.email?.[0]?.toUpperCase() || 'U'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">
-              {user?.email || 'User'}
-            </p>
-            <p className="text-xs text-muted-foreground capitalize">
-              {company?.subscription?.plan || 'Loading...'} Plan
-            </p>
-          </div>
-        </div>
-        <Button
-          variant="outline"
-          className="w-full justify-start"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Logout
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-secondary transition-colors focus:outline-none focus-visible:outline-none">
+              <Avatar>
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {user?.email?.[0]?.toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-sm font-medium truncate">
+                  {user?.email || 'User'}
+                </p>
+                <p className="text-xs text-muted-foreground capitalize">
+                  {company?.subscription?.plan || 'Loading...'} Plan
+                </p>
+              </div>
+              <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end">
+            <DropdownMenuItem onClick={() => navigate('/settings')}>
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
