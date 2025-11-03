@@ -2,12 +2,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const MetricCard = ({ title, value, change, trend, suffix = '' }) => {
+const MetricCard = ({ title, value, change, trend, suffix = '', onClick, isActive = false }) => {
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
   const trendColor = trend === 'up' ? 'text-black' : trend === 'down' ? 'text-gray-500' : 'text-gray-400';
 
   return (
-    <Card>
+    <Card
+      className={cn(
+        "cursor-pointer transition-all hover:shadow-md bg-gray-50",
+        isActive && "ring-2 ring-black shadow-lg bg-white"
+      )}
+      onClick={onClick}
+    >
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}

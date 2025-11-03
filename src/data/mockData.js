@@ -43,6 +43,14 @@ export const mockCompanyData = {
         avgProbability: 68.3, // average % chance of appearing in results
         avgRank: 2.1, // average position when mentioned
       },
+      visibilityScoreOverTime: [
+        { date: "Jan", acme: 65.3, competitorCo: 85.2, rivalTech: 48.5, industryCorp: 38.7 },
+        { date: "Feb", acme: 68.9, competitorCo: 86.8, rivalTech: 51.3, industryCorp: 41.2 },
+        { date: "Mar", acme: 73.5, competitorCo: 88.4, rivalTech: 54.8, industryCorp: 44.6 },
+        { date: "Apr", acme: 76.2, competitorCo: 89.7, rivalTech: 58.2, industryCorp: 47.9 },
+        { date: "May", acme: 79.8, competitorCo: 91.3, rivalTech: 61.7, industryCorp: 51.3 },
+        { date: "Jun", acme: 82.5, competitorCo: 92.8, rivalTech: 65.4, industryCorp: 54.8 },
+      ],
       mentionsOverTime: [
         { date: "Jan", acme: 45.2, competitorCo: 68.5, rivalTech: 32.1, industryCorp: 28.3 },
         { date: "Feb", acme: 52.8, competitorCo: 71.2, rivalTech: 35.4, industryCorp: 30.1 },
@@ -50,6 +58,14 @@ export const mockCompanyData = {
         { date: "Apr", acme: 58.9, competitorCo: 76.3, rivalTech: 41.7, industryCorp: 35.2 },
         { date: "May", acme: 65.7, competitorCo: 78.9, rivalTech: 44.3, industryCorp: 37.8 },
         { date: "Jun", acme: 72.4, competitorCo: 81.2, rivalTech: 47.5, industryCorp: 40.6 },
+      ],
+      avgProbabilityOverTime: [
+        { date: "Jan", acme: 52.4, competitorCo: 78.6, rivalTech: 45.2, industryCorp: 38.9 },
+        { date: "Feb", acme: 56.8, competitorCo: 79.3, rivalTech: 48.7, industryCorp: 41.5 },
+        { date: "Mar", acme: 60.5, competitorCo: 80.9, rivalTech: 52.3, industryCorp: 44.8 },
+        { date: "Apr", acme: 63.2, competitorCo: 82.1, rivalTech: 55.6, industryCorp: 47.6 },
+        { date: "May", acme: 66.1, competitorCo: 83.7, rivalTech: 58.9, industryCorp: 50.3 },
+        { date: "Jun", acme: 68.3, competitorCo: 85.2, rivalTech: 62.4, industryCorp: 53.1 },
       ],
       rankingsOverTime: [
         { date: "Jan", acme: 3, competitorCo: 1, rivalTech: 5, industryCorp: 8 },
