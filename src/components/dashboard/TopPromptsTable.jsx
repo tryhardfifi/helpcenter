@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -8,9 +9,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
-const TopPromptsTable = ({ data, title = "Top Prompts" }) => {
+const TopPromptsTable = ({ data, title = "Top Prompts", company }) => {
+  const [selectedCompetitor, setSelectedCompetitor] = useState('own');
+
   const getTrendIcon = (trend) => {
     switch (trend) {
       case 'up':
@@ -33,38 +37,77 @@ const TopPromptsTable = ({ data, title = "Top Prompts" }) => {
     }
   };
 
-  // Sort prompts by mentionRate (probability) in descending order
-  const sortedData = [...data].sort((a, b) => b.mentionRate - a.mentionRate);
+  // Create competitor list with own company first
+  const competitors = [
+    { id: 'own', name: company?.name || 'Your Business', dataKey: 'acme' },
+    ...(company?.competitors || []).map(comp => ({
+      id: comp.id,
+      name: comp.name,
+      dataKey: comp.name.replace(/\s+/g, '').charAt(0).toLowerCase() + comp.name.replace(/\s+/g, '').slice(1)
+    }))
+  ];
+
+  // Get the data key for the selected competitor
+  const selectedDataKey = competitors.find(c => c.id === selectedCompetitor)?.dataKey || 'acme';
+
+  // Get mention rate for selected competitor from the latest data point
+  const getCompetitorMentionRate = (prompt) => {
+    if (!prompt.analytics?.mentionsOverTime) return 0;
+    const latestData = prompt.analytics.mentionsOverTime[prompt.analytics.mentionsOverTime.length - 1];
+    return latestData?.[selectedDataKey] || 0;
+  };
+
+  // Sort prompts by the selected competitor's mention rate
+  const sortedData = [...data].sort((a, b) =>
+    getCompetitorMentionRate(b) - getCompetitorMentionRate(a)
+  );
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <div className="space-y-6">
+          <CardTitle>{title}</CardTitle>
+          <Tabs value={selectedCompetitor} onValueChange={setSelectedCompetitor}>
+            <TabsList>
+              {competitors.map((competitor) => (
+                <TabsTrigger key={competitor.id} value={competitor.id}>
+                  {competitor.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Prompt</TableHead>
-              <TableHead className="text-right">Avg. Probability</TableHead>
+              <TableHead className="text-right">Mention Rate</TableHead>
               <TableHead className="text-right">Avg. Rank</TableHead>
               <TableHead className="text-center">Trend</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedData.map((prompt, index) => (
-              <TableRow key={prompt.id || index}>
-                <TableCell className="font-medium max-w-md">{prompt.text}</TableCell>
-                <TableCell className="text-right font-semibold">{prompt.mentionRate}%</TableCell>
-                <TableCell className="text-right font-semibold">#{prompt.analytics?.averagePosition || 'N/A'}</TableCell>
-                <TableCell className="text-center">
-                  <Badge variant={getTrendVariant(prompt.trend)} className="gap-1">
-                    {getTrendIcon(prompt.trend)}
-                    {prompt.trend}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
+            {sortedData.map((prompt, index) => {
+              const mentionRate = getCompetitorMentionRate(prompt);
+              const latestRankings = prompt.analytics?.rankingsOverTime?.[prompt.analytics.rankingsOverTime.length - 1];
+              const rank = latestRankings?.[selectedDataKey] || 'N/A';
+
+              return (
+                <TableRow key={prompt.id || index}>
+                  <TableCell className="font-medium max-w-md">{prompt.text}</TableCell>
+                  <TableCell className="text-right font-semibold">{mentionRate}%</TableCell>
+                  <TableCell className="text-right font-semibold">#{rank}</TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant={getTrendVariant(prompt.trend)} className="gap-1">
+                      {getTrendIcon(prompt.trend)}
+                      {prompt.trend}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </CardContent>

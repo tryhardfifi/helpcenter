@@ -122,10 +122,10 @@ const Dashboard = () => {
       />
 
       {/* Top Prompts Table */}
-      <TopPromptsTable data={prompts} />
+      <TopPromptsTable data={prompts} company={company} />
 
       {/* Top Sources Table */}
-      <AttributionTable data={analytics.topSources} title="Top Sources" />
+      <AttributionTable data={analytics.topSources} title="Top Sources" company={company} />
     </div>
   );
 };
