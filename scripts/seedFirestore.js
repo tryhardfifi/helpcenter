@@ -49,19 +49,21 @@ async function seedFirestore(userEmails = ["fifacioni@gmail.com"], existingCompa
     console.log(`📦 Company ID: ${companyId}`);
 
     // 1. Create or update company document
-    console.log("📄 Creating company document...");
+    console.log("📄 Creating/updating company document...");
     const companyRef = doc(db, "companies", companyId);
     const companyDoc = await getDoc(companyRef);
 
+    // Always update to ensure we have the latest mock data structure
+    await setDoc(companyRef, {
+      ...mockCompanyData.company,
+      id: companyId,
+      createdAt: companyDoc.exists() ? companyDoc.data().createdAt : new Date().toISOString().split('T')[0],
+      members: userEmails,
+    }, { merge: false }); // Don't merge, replace completely to get new fields
+
     if (companyDoc.exists()) {
-      console.log("📝 Company already exists, skipping company creation");
+      console.log("✅ Company document updated with latest data");
     } else {
-      await setDoc(companyRef, {
-        ...mockCompanyData.company,
-        id: companyId,
-        createdAt: new Date().toISOString().split('T')[0],
-        members: userEmails,
-      });
       console.log("✅ Company document created");
     }
 
