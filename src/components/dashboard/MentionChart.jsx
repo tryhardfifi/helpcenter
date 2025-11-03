@@ -2,6 +2,29 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const MentionChart = ({ data, title = "Mention Rate Over Time (%)" }) => {
+  // Extract all unique keys (company names) from the data
+  const getCompanyKeys = () => {
+    if (!data || data.length === 0) return [];
+    const keys = new Set();
+    data.forEach(item => {
+      Object.keys(item).forEach(key => {
+        if (key !== 'date') keys.add(key);
+      });
+    });
+    return Array.from(keys);
+  };
+
+  const companyKeys = getCompanyKeys();
+
+  // Color palette for lines
+  const colors = ['#000', '#666', '#999', '#ccc', '#4a5568', '#718096'];
+  const dashArrays = ['0', '5 5', '3 3', '8 4', '2 2', '10 5'];
+
+  // Capitalize company name for display
+  const formatCompanyName = (key) => {
+    return key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim();
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -28,40 +51,18 @@ const MentionChart = ({ data, title = "Mention Rate Over Time (%)" }) => {
               }}
             />
             <Legend />
-            <Line
-              type="monotone"
-              dataKey="acme"
-              stroke="#000"
-              strokeWidth={2}
-              name="Acme Inc."
-              dot={{ fill: '#000', r: 4 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="competitorCo"
-              stroke="#666"
-              strokeWidth={2}
-              strokeDasharray="5 5"
-              name="CompetitorCo"
-              dot={{ fill: '#666', r: 4 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="rivalTech"
-              stroke="#999"
-              strokeWidth={2}
-              strokeDasharray="3 3"
-              name="RivalTech"
-              dot={{ fill: '#999', r: 4 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="industryCorp"
-              stroke="#ccc"
-              strokeWidth={2}
-              name="IndustryCorp"
-              dot={{ fill: '#ccc', r: 4 }}
-            />
+            {companyKeys.map((key, index) => (
+              <Line
+                key={key}
+                type="monotone"
+                dataKey={key}
+                stroke={colors[index % colors.length]}
+                strokeWidth={2}
+                strokeDasharray={index === 0 ? '0' : dashArrays[index % dashArrays.length]}
+                name={formatCompanyName(key)}
+                dot={{ fill: colors[index % colors.length], r: 4 }}
+              />
+            ))}
           </LineChart>
         </ResponsiveContainer>
       </CardContent>

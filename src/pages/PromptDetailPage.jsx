@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import PromptDetail from '@/components/prompts/PromptDetail';
 const PromptDetailPage = () => {
   const { id } = useParams();
   const { prompts, loading } = useCompanyData();
+  const [selectedRun, setSelectedRun] = useState(null);
 
   // Find the prompt from cached data
   const prompt = prompts.find(p => p.id === id);
@@ -17,14 +19,16 @@ const PromptDetailPage = () => {
   if (prompt) {
     return (
       <div className="space-y-6">
-        <Link to="/prompts">
-          <Button variant="ghost" className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Prompts
-          </Button>
-        </Link>
+        {!selectedRun && (
+          <Link to="/prompts">
+            <Button variant="ghost" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Prompts
+            </Button>
+          </Link>
+        )}
 
-        <PromptDetail prompt={prompt} />
+        <PromptDetail prompt={prompt} selectedRun={selectedRun} setSelectedRun={setSelectedRun} />
       </div>
     );
   }

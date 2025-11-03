@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, doc, setDoc, writeBatch, getDoc } from "firebase/firestore";
-import { mockCompanyData } from "../src/data/mockData.js";
+import { mockCompanyData, mockRuns } from "../src/data/mockData.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -106,12 +106,34 @@ async function seedFirestore(userEmails = ["fifacioni@gmail.com"], existingCompa
     await articlesBatch.commit();
     console.log(`✅ Created ${mockCompanyData.articles.length} articles`);
 
+    // 5. Create runs subcollections for each prompt using batched writes
+    console.log("🏃 Creating runs subcollections...");
+    let totalRuns = 0;
+    const runsBatch = writeBatch(db);
+
+    for (const prompt of mockCompanyData.prompts) {
+      const promptRuns = mockRuns[prompt.id] || [];
+
+      for (const run of promptRuns) {
+        const runRef = doc(collection(companyRef, "prompts", prompt.id, "runs"), run.id);
+        runsBatch.set(runRef, {
+          ...run,
+          createdAt: new Date(run.createdAt), // Convert ISO string to Date for Firestore
+        });
+        totalRuns++;
+      }
+    }
+
+    await runsBatch.commit();
+    console.log(`✅ Created ${totalRuns} runs across all prompts`);
+
     console.log("\n🎉 Firestore seeding completed successfully!");
     console.log(`\n📊 Summary:`);
     console.log(`   - Company ID: ${companyId}`);
     console.log(`   - Users: ${userEmails.join(', ')}`);
     console.log(`   - Company Name: ${mockCompanyData.company.name}`);
     console.log(`   - Prompts: ${mockCompanyData.prompts.length}`);
+    console.log(`   - Runs: ${totalRuns}`);
     console.log(`   - Articles: ${mockCompanyData.articles.length}`);
     console.log(`   - Competitors: ${mockCompanyData.company.competitors.length}`);
 
