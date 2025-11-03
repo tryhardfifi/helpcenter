@@ -82,6 +82,15 @@ export const mockCompanyData = {
         { url: "acme.com/pricing", mentionRate: 14.5, percentage: 11.6, trend: "down" },
         { url: "acme.com/case-studies", mentionRate: 12.3, percentage: 9.8, trend: "up" },
       ],
+      topSources: [
+        { url: "acme.com/blog/future-of-collaboration", mentionRate: 32.4, percentage: 28.5, trend: "up", type: "own" },
+        { url: "reddit.com/r/SaaS/comments/acme-review", mentionRate: 24.8, percentage: 21.8, trend: "up", type: "reddit" },
+        { url: "producthunt.com/posts/acme-inc", mentionRate: 18.6, percentage: 16.4, trend: "stable", type: "external" },
+        { url: "acme.com/case-studies/enterprise", mentionRate: 15.2, percentage: 13.4, trend: "up", type: "own" },
+        { url: "techcrunch.com/acme-raises-series-b", mentionRate: 12.9, percentage: 11.3, trend: "down", type: "news" },
+        { url: "reddit.com/r/productivity/acme-vs-competitors", mentionRate: 8.7, percentage: 7.6, trend: "stable", type: "reddit" },
+        { url: "acme.com/blog/ai-transformation", mentionRate: 6.4, percentage: 5.6, trend: "up", type: "own" },
+      ],
     },
   },
 

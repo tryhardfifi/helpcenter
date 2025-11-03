@@ -42,7 +42,7 @@ const AttributionTable = ({ data, title = "Top Pages" }) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Page URL</TableHead>
+              <TableHead>Source URL</TableHead>
               <TableHead className="text-right">Mention Rate</TableHead>
               <TableHead className="text-right">Share of Total</TableHead>
               <TableHead className="text-center">Trend</TableHead>

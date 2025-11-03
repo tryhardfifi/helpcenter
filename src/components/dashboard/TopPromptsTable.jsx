@@ -47,6 +47,7 @@ const TopPromptsTable = ({ data, title = "Top Prompts" }) => {
             <TableRow>
               <TableHead>Prompt</TableHead>
               <TableHead className="text-right">Avg. Probability</TableHead>
+              <TableHead className="text-right">Avg. Rank</TableHead>
               <TableHead className="text-center">Trend</TableHead>
             </TableRow>
           </TableHeader>
@@ -55,6 +56,7 @@ const TopPromptsTable = ({ data, title = "Top Prompts" }) => {
               <TableRow key={prompt.id || index}>
                 <TableCell className="font-medium max-w-md">{prompt.text}</TableCell>
                 <TableCell className="text-right font-semibold">{prompt.mentionRate}%</TableCell>
+                <TableCell className="text-right font-semibold">#{prompt.analytics?.averagePosition || 'N/A'}</TableCell>
                 <TableCell className="text-center">
                   <Badge variant={getTrendVariant(prompt.trend)} className="gap-1">
                     {getTrendIcon(prompt.trend)}

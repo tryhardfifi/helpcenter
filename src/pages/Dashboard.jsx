@@ -121,11 +121,11 @@ const Dashboard = () => {
         kpiType={activeKPI}
       />
 
-      {/* Attribution Table */}
-      <AttributionTable data={analytics.topPages} />
-
       {/* Top Prompts Table */}
       <TopPromptsTable data={prompts} />
+
+      {/* Top Sources Table */}
+      <AttributionTable data={analytics.topSources} title="Top Sources" />
     </div>
   );
 };
