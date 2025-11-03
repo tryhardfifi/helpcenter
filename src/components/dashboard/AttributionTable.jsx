@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, ExternalLink } from 'lucide-react';
 
 const AttributionTable = ({ data = [], title = "Top Pages", company }) => {
   const [selectedCompetitor, setSelectedCompetitor] = useState('own');
@@ -80,19 +80,29 @@ const AttributionTable = ({ data = [], title = "Top Pages", company }) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Source URL</TableHead>
-              <TableHead className="text-right">Mention Rate</TableHead>
-              <TableHead className="text-right">Share of Total</TableHead>
-              <TableHead className="text-center">Trend</TableHead>
+              <TableHead className="w-auto">Source URL</TableHead>
+              <TableHead className="text-right w-32">Mention Rate</TableHead>
+              <TableHead className="text-right w-32">Share of Total</TableHead>
+              <TableHead className="text-center w-28">Trend</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.map((page, index) => (
               <TableRow key={index}>
-                <TableCell className="font-medium">{page.url}</TableCell>
-                <TableCell className="text-right">{page.mentionRate}%</TableCell>
-                <TableCell className="text-right">{page.percentage}%</TableCell>
-                <TableCell className="text-center">
+                <TableCell className="font-medium">
+                  <a
+                    href={page.url.startsWith('http') ? page.url : `https://${page.url}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 hover:text-primary transition-colors"
+                  >
+                    {page.url}
+                    <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+                  </a>
+                </TableCell>
+                <TableCell className="text-right font-semibold w-32">{page.mentionRate}%</TableCell>
+                <TableCell className="text-right font-semibold w-32">{page.percentage}%</TableCell>
+                <TableCell className="text-center w-28">
                   <Badge variant={getTrendVariant(page.trend)} className="gap-1">
                     {getTrendIcon(page.trend)}
                     {page.trend}

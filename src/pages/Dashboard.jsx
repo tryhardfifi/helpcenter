@@ -121,9 +121,6 @@ const Dashboard = () => {
         kpiType={activeKPI}
       />
 
-      {/* Attribution Table */}
-      <AttributionTable data={analytics.topPages} company={company} />
-
       {/* Top Prompts Table */}
       <TopPromptsTable data={prompts} company={company} />
 

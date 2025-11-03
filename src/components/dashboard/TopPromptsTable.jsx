@@ -82,10 +82,10 @@ const TopPromptsTable = ({ data, title = "Top Prompts", company }) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Prompt</TableHead>
-              <TableHead className="text-right">Mention Rate</TableHead>
-              <TableHead className="text-right">Avg. Rank</TableHead>
-              <TableHead className="text-center">Trend</TableHead>
+              <TableHead className="w-auto">Prompt</TableHead>
+              <TableHead className="text-right w-32">Mention Rate</TableHead>
+              <TableHead className="text-right w-32">Avg. Rank</TableHead>
+              <TableHead className="text-center w-28">Trend</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -97,9 +97,9 @@ const TopPromptsTable = ({ data, title = "Top Prompts", company }) => {
               return (
                 <TableRow key={prompt.id || index}>
                   <TableCell className="font-medium max-w-md">{prompt.text}</TableCell>
-                  <TableCell className="text-right font-semibold">{mentionRate}%</TableCell>
-                  <TableCell className="text-right font-semibold">#{rank}</TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-right font-semibold w-32">{mentionRate}%</TableCell>
+                  <TableCell className="text-right font-semibold w-32">#{rank}</TableCell>
+                  <TableCell className="text-center w-28">
                     <Badge variant={getTrendVariant(prompt.trend)} className="gap-1">
                       {getTrendIcon(prompt.trend)}
                       {prompt.trend}
