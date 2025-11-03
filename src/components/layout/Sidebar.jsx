@@ -17,7 +17,6 @@ const Sidebar = () => {
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/competitors', label: 'Competitors', icon: Users },
     { path: '/prompts', label: 'Prompts', icon: FileText },
-    { path: '/settings', label: 'Settings', icon: Settings },
   ];
 
   const handleLogout = async () => {
@@ -63,6 +62,22 @@ const Sidebar = () => {
       {/* User section */}
       <div className="p-4 space-y-4">
         <DataSourceToggle />
+
+        <Link
+          to="/settings"
+          className={cn(
+            "flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-colors w-full",
+            location.pathname === '/settings'
+              ? "bg-primary text-primary-foreground"
+              : "text-foreground hover:bg-secondary"
+          )}
+        >
+          <Settings className="h-5 w-5" />
+          Settings
+        </Link>
+
+        <Separator />
+
         <div className="flex items-center gap-3">
           <Avatar>
             <AvatarFallback className="bg-primary text-primary-foreground">
