@@ -108,9 +108,9 @@ export const mockCompanyData = {
       companyId: "acme-inc-123",
       text: "What are the best project management tools for startups?",
       mentionRate: 70.0,
-      trend: "up",
       createdAt: "2024-01-10",
       lastUpdated: "2024-03-15",
+      totalMentions: 145,
       analytics: {
         mentionsOverTime: [
           { date: "Jan", acme: 35.2, competitorCo: 78.5, rivalTech: 24.3, industryCorp: 15.8 },
@@ -129,7 +129,6 @@ export const mockCompanyData = {
           { date: "Jun", acme: 1, competitorCo: 2, rivalTech: 3, industryCorp: 5 },
         ],
         averagePosition: 1.5,
-        sentiment: "positive",
         coMentions: ["CompetitorCo", "RivalTech"],
       },
     },
@@ -138,9 +137,9 @@ export const mockCompanyData = {
       companyId: "acme-inc-123",
       text: "Compare enterprise software solutions for team collaboration",
       mentionRate: 55.2,
-      trend: "up",
       createdAt: "2024-01-12",
       lastUpdated: "2024-03-14",
+      totalMentions: 112,
       analytics: {
         mentionsOverTime: [
           { date: "Jan", acme: 28, competitorCo: 40, rivalTech: 15, industryCorp: 10 },
@@ -159,7 +158,6 @@ export const mockCompanyData = {
           { date: "Jun", acme: 1, competitorCo: 2, rivalTech: 3, industryCorp: 4 },
         ],
         averagePosition: 2.0,
-        sentiment: "positive",
         coMentions: ["CompetitorCo", "RivalTech", "IndustryCorp"],
       },
     },
@@ -168,9 +166,9 @@ export const mockCompanyData = {
       companyId: "acme-inc-123",
       text: "Which companies offer AI-powered analytics?",
       mentionRate: 27.0,
-      trend: "stable",
       createdAt: "2024-01-15",
       lastUpdated: "2024-03-13",
+      totalMentions: 54,
       analytics: {
         mentionsOverTime: [
           { date: "Jan", acme: 25, competitorCo: 30, rivalTech: 20, industryCorp: 15 },
@@ -189,7 +187,6 @@ export const mockCompanyData = {
           { date: "Jun", acme: 3, competitorCo: 1, rivalTech: 4, industryCorp: 5 },
         ],
         averagePosition: 3.0,
-        sentiment: "neutral",
         coMentions: ["CompetitorCo", "RivalTech", "IndustryCorp"],
       },
     },
@@ -198,9 +195,9 @@ export const mockCompanyData = {
       companyId: "acme-inc-123",
       text: "Best B2B SaaS tools for productivity",
       mentionRate: 58.0,
-      trend: "up",
       createdAt: "2024-01-18",
       lastUpdated: "2024-03-12",
+      totalMentions: 118,
       analytics: {
         mentionsOverTime: [
           { date: "Jan", acme: 30, competitorCo: 38, rivalTech: 14, industryCorp: 8 },
@@ -219,7 +216,6 @@ export const mockCompanyData = {
           { date: "Jun", acme: 1, competitorCo: 2, rivalTech: 3, industryCorp: 4 },
         ],
         averagePosition: 1.7,
-        sentiment: "positive",
         coMentions: ["CompetitorCo", "RivalTech"],
       },
     },
@@ -228,9 +224,9 @@ export const mockCompanyData = {
       companyId: "acme-inc-123",
       text: "Top-rated business intelligence platforms",
       mentionRate: 24.0,
-      trend: "down",
       createdAt: "2024-01-20",
       lastUpdated: "2024-03-11",
+      totalMentions: 48,
       analytics: {
         mentionsOverTime: [
           { date: "Jan", acme: 35, competitorCo: 32, rivalTech: 18, industryCorp: 12 },
@@ -249,7 +245,6 @@ export const mockCompanyData = {
           { date: "Jun", acme: 4, competitorCo: 1, rivalTech: 3, industryCorp: 5 },
         ],
         averagePosition: 2.8,
-        sentiment: "neutral",
         coMentions: ["CompetitorCo", "RivalTech", "IndustryCorp"],
       },
     },
@@ -537,6 +532,303 @@ Contact our enterprise team to learn how Acme Inc. can transform your organizati
       },
     },
   ],
+};
+
+// Helper function to generate mock detailed runs
+const generateMockDetailedRuns = (mentionPercentage, avgPosition) => {
+  const runs = [];
+  const mentionCount = Math.round(mentionPercentage / 10); // How many out of 10 mentioned us
+
+  for (let i = 0; i < 10; i++) {
+    const isMentioned = i < mentionCount;
+    const position = isMentioned && avgPosition ? Math.max(1, avgPosition + Math.floor(Math.random() * 3) - 1) : null; // Vary around avg, min 1
+
+    const competitorCo = Math.random() > 0.3;
+    const rivalTech = Math.random() > 0.5;
+    const industryCorp = Math.random() > 0.7;
+
+    let conversationText = `Based on current market analysis, here are some top recommendations:\n\n`;
+
+    // Build numbered list based on positions
+    const mentions = [];
+    if (isMentioned) mentions.push({ pos: position, name: 'Acme Inc.', desc: 'offers a comprehensive feature set and excellent user experience' });
+    if (competitorCo) mentions.push({ pos: 1, name: 'CompetitorCo', desc: 'is known for its robust performance and scalability' });
+    if (rivalTech) mentions.push({ pos: 2, name: 'RivalTech', desc: 'provides great value with competitive pricing' });
+    if (industryCorp) mentions.push({ pos: 3, name: 'IndustryCorp', desc: 'has a proven track record with many satisfied customers' });
+
+    // Sort by position
+    mentions.sort((a, b) => a.pos - b.pos);
+
+    mentions.forEach(m => {
+      conversationText += `${m.pos}. **${m.name}** - ${m.desc}\n`;
+    });
+
+    conversationText += `\n\nEach of these options has its strengths, so the best choice depends on your specific needs and requirements.`;
+
+    runs.push({
+      runNumber: i + 1,
+      conversation: conversationText,
+      ourCompany: {
+        name: 'Acme Inc.',
+        mentioned: isMentioned,
+        position: position,
+        mentionPercentage: isMentioned ? 100 : 0
+      },
+      competitors: [
+        {
+          name: 'CompetitorCo',
+          mentioned: competitorCo,
+          position: competitorCo ? 1 : null,
+          mentionPercentage: competitorCo ? 100 : 0
+        },
+        {
+          name: 'RivalTech',
+          mentioned: rivalTech,
+          position: rivalTech ? 2 : null,
+          mentionPercentage: rivalTech ? 100 : 0
+        },
+        {
+          name: 'IndustryCorp',
+          mentioned: industryCorp,
+          position: industryCorp ? 3 : null,
+          mentionPercentage: industryCorp ? 100 : 0
+        }
+      ]
+    });
+  }
+
+  return runs;
+};
+
+const generateCompetitorMetrics = (detailedRuns) => {
+  const metrics = {
+    CompetitorCo: { mentionPercentage: 0, averagePosition: null, mentionedCount: 0 },
+    RivalTech: { mentionPercentage: 0, averagePosition: null, mentionedCount: 0 },
+    IndustryCorp: { mentionPercentage: 0, averagePosition: null, mentionedCount: 0 }
+  };
+
+  Object.keys(metrics).forEach(competitor => {
+    const mentions = detailedRuns.filter(r =>
+      r.competitors.some(c => c.name === competitor && c.mentioned)
+    );
+    const positions = mentions
+      .map(r => r.competitors.find(c => c.name === competitor)?.position)
+      .filter(p => p != null);
+
+    metrics[competitor] = {
+      mentionPercentage: (mentions.length / detailedRuns.length) * 100,
+      averagePosition: positions.length > 0
+        ? Math.round(positions.reduce((a, b) => a + b, 0) / positions.length)
+        : null,
+      mentionedCount: mentions.length
+    };
+  });
+
+  return metrics;
+};
+
+// Mock Runs data (companies/{companyId}/prompts/{promptId}/runs)
+export const mockRuns = {
+  'prompt-1': (() => {
+    const run1Details = generateMockDetailedRuns(80, 2);
+    const run2Details = generateMockDetailedRuns(70, 1);
+    const run3Details = generateMockDetailedRuns(60, 3);
+    const run4Details = generateMockDetailedRuns(50, 4);
+
+    return [
+      {
+        id: 'run-1',
+        promptId: 'prompt-1',
+        createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(), // 10 min ago
+        mentionPercentage: 80,
+        position: 2,
+        detailedRuns: run1Details,
+        competitorMetrics: generateCompetitorMetrics(run1Details),
+        analyzedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'run-2',
+        promptId: 'prompt-1',
+        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+        mentionPercentage: 70,
+        position: 1,
+        detailedRuns: run2Details,
+        competitorMetrics: generateCompetitorMetrics(run2Details),
+        analyzedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'run-3',
+        promptId: 'prompt-1',
+        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+        mentionPercentage: 60,
+        position: 3,
+        detailedRuns: run3Details,
+        competitorMetrics: generateCompetitorMetrics(run3Details),
+        analyzedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'run-4',
+        promptId: 'prompt-1',
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+        mentionPercentage: 50,
+        position: 4,
+        detailedRuns: run4Details,
+        competitorMetrics: generateCompetitorMetrics(run4Details),
+        analyzedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+      }
+    ];
+  })(),
+  'prompt-2': (() => {
+    const run5Details = generateMockDetailedRuns(60, 2);
+    const run6Details = generateMockDetailedRuns(55, 1);
+    const run7Details = generateMockDetailedRuns(50, 3);
+
+    return [
+      {
+        id: 'run-5',
+        promptId: 'prompt-2',
+        createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 min ago
+        mentionPercentage: 60,
+        position: 2,
+        detailedRuns: run5Details,
+        competitorMetrics: generateCompetitorMetrics(run5Details),
+        analyzedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'run-6',
+        promptId: 'prompt-2',
+        createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+        mentionPercentage: 55,
+        position: 1,
+        detailedRuns: run6Details,
+        competitorMetrics: generateCompetitorMetrics(run6Details),
+        analyzedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'run-7',
+        promptId: 'prompt-2',
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+        mentionPercentage: 50,
+        position: 3,
+        detailedRuns: run7Details,
+        competitorMetrics: generateCompetitorMetrics(run7Details),
+        analyzedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+      }
+    ];
+  })(),
+  'prompt-3': (() => {
+    const run8Details = generateMockDetailedRuns(30, 3);
+    const run9Details = generateMockDetailedRuns(20, null);
+    const run10Details = generateMockDetailedRuns(40, 2);
+
+    return [
+      {
+        id: 'run-8',
+        promptId: 'prompt-3',
+        createdAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(), // 45 min ago
+        mentionPercentage: 30,
+        position: 3,
+        detailedRuns: run8Details,
+        competitorMetrics: generateCompetitorMetrics(run8Details),
+        analyzedAt: new Date(Date.now() - 45 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'run-9',
+        promptId: 'prompt-3',
+        createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), // 12 hours ago
+        mentionPercentage: 20,
+        position: null, // Not mentioned
+        detailedRuns: run9Details,
+        competitorMetrics: generateCompetitorMetrics(run9Details),
+        analyzedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'run-10',
+        promptId: 'prompt-3',
+        createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+        mentionPercentage: 40,
+        position: 2,
+        detailedRuns: run10Details,
+        competitorMetrics: generateCompetitorMetrics(run10Details),
+        analyzedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString()
+      }
+    ];
+  })(),
+  'prompt-4': (() => {
+    const run11Details = generateMockDetailedRuns(70, 1);
+    const run12Details = generateMockDetailedRuns(60, 2);
+    const run13Details = generateMockDetailedRuns(50, 1);
+
+    return [
+      {
+        id: 'run-11',
+        promptId: 'prompt-4',
+        createdAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 min ago
+        mentionPercentage: 70,
+        position: 1,
+        detailedRuns: run11Details,
+        competitorMetrics: generateCompetitorMetrics(run11Details),
+        analyzedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'run-12',
+        promptId: 'prompt-4',
+        createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), // 8 hours ago
+        mentionPercentage: 60,
+        position: 2,
+        detailedRuns: run12Details,
+        competitorMetrics: generateCompetitorMetrics(run12Details),
+        analyzedAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'run-13',
+        promptId: 'prompt-4',
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+        mentionPercentage: 50,
+        position: 1,
+        detailedRuns: run13Details,
+        competitorMetrics: generateCompetitorMetrics(run13Details),
+        analyzedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+      }
+    ];
+  })(),
+  'prompt-5': (() => {
+    const run14Details = generateMockDetailedRuns(20, 4);
+    const run15Details = generateMockDetailedRuns(30, 3);
+
+    return [
+      {
+        id: 'run-14',
+        promptId: 'prompt-5',
+        createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
+        mentionPercentage: 20,
+        position: 4,
+        detailedRuns: run14Details,
+        competitorMetrics: generateCompetitorMetrics(run14Details),
+        analyzedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'run-15',
+        promptId: 'prompt-5',
+        createdAt: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(), // 18 hours ago
+        mentionPercentage: 30,
+        position: 3,
+        detailedRuns: run15Details,
+        competitorMetrics: generateCompetitorMetrics(run15Details),
+        analyzedAt: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 'run-16',
+        promptId: 'prompt-5',
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+        mentionPercentage: 10,
+        position: null, // Not mentioned
+        detailedRuns: generateMockDetailedRuns(10, null),
+        competitorMetrics: generateCompetitorMetrics(generateMockDetailedRuns(10, null)),
+        analyzedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+      }
+    ];
+  })()
 };
 
 // Helper functions to access data (simulates Firestore queries)

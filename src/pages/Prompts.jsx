@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useCompanyData } from '@/contexts/CompanyDataContext';
 import { useCompanyId } from '@/hooks/useCompanyId';
 import { getDataSource, createPrompt } from '@/services/dataService';
+import { formatRelativeTime } from '@/utils/dateUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -12,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,7 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { TrendingUp, TrendingDown, Minus, Database, Plus } from 'lucide-react';
+import { Database, Plus } from 'lucide-react';
 
 const Prompts = () => {
   const { prompts, loading, refetch } = useCompanyData();
@@ -32,28 +32,6 @@ const Prompts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [promptText, setPromptText] = useState('');
   const [creating, setCreating] = useState(false);
-
-  const getTrendIcon = (trend) => {
-    switch (trend) {
-      case 'up':
-        return <TrendingUp className="h-4 w-4" />;
-      case 'down':
-        return <TrendingDown className="h-4 w-4" />;
-      default:
-        return <Minus className="h-4 w-4" />;
-    }
-  };
-
-  const getTrendVariant = (trend) => {
-    switch (trend) {
-      case 'up':
-        return 'default';
-      case 'down':
-        return 'secondary';
-      default:
-        return 'outline';
-    }
-  };
 
   const handleCreatePrompt = async () => {
     if (!promptText.trim()) return;
@@ -157,8 +135,6 @@ const Prompts = () => {
                 <TableHead>Prompt</TableHead>
                 <TableHead className="text-right">Mention Rate</TableHead>
                 <TableHead className="text-right">Avg Position</TableHead>
-                <TableHead className="text-center">Sentiment</TableHead>
-                <TableHead className="text-center">Trend</TableHead>
                 <TableHead className="text-right">Last Updated</TableHead>
               </TableRow>
             </TableHeader>
@@ -180,19 +156,8 @@ const Prompts = () => {
                   </TableCell>
                   <TableCell className="text-right">{prompt.mentionRate}%</TableCell>
                   <TableCell className="text-right">#{prompt.analytics.averagePosition}</TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant="outline" className="capitalize">
-                      {prompt.analytics.sentiment}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant={getTrendVariant(prompt.trend)} className="gap-1">
-                      {getTrendIcon(prompt.trend)}
-                      {prompt.trend}
-                    </Badge>
-                  </TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">
-                    {new Date(prompt.lastUpdated).toLocaleDateString()}
+                    {formatRelativeTime(prompt.lastUpdated)}
                   </TableCell>
                 </TableRow>
               ))}

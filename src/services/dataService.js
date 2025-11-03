@@ -6,7 +6,9 @@ import {
   getPromptById as getMockPromptById,
   getCompanyArticles as getMockCompanyArticles,
   getArticleById as getMockArticleById,
+  mockRuns,
 } from "../data/mockData";
+import { runPromptAnalysis } from "./promptRunner";
 
 // Data source toggle - can be controlled by user preference
 let useMockData = true;
@@ -136,7 +138,6 @@ export const createPrompt = async (companyId, promptText) => {
       id: `prompt-${Date.now()}`,
       text: promptText,
       mentionRate: 0,
-      trend: "stable",
       createdAt: new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
       totalMentions: 0,
@@ -144,7 +145,6 @@ export const createPrompt = async (companyId, promptText) => {
         mentionsOverTime: [],
         rankingsOverTime: [],
         averagePosition: 0,
-        sentiment: "neutral",
         coMentions: [],
       },
     };
@@ -162,7 +162,6 @@ export const createPrompt = async (companyId, promptText) => {
     const newPrompt = {
       text: promptText,
       mentionRate: 0,
-      trend: "stable",
       createdAt: now,
       lastUpdated: now,
       totalMentions: 0,
@@ -170,7 +169,6 @@ export const createPrompt = async (companyId, promptText) => {
         mentionsOverTime: [],
         rankingsOverTime: [],
         averagePosition: 0,
-        sentiment: "neutral",
         coMentions: [],
       },
     };
@@ -282,4 +280,131 @@ export const createCompetitor = async (companyId, competitorUrl) => {
     console.error("Error creating competitor in Firestore:", error);
     throw error;
   }
+};
+
+// Runs operations
+/**
+ * Get all runs for a prompt (sorted newest first)
+ */
+export const getPromptRuns = async (companyId, promptId) => {
+  if (useMockData) {
+    return mockRuns[promptId] || [];
+  }
+
+  if (!companyId || !promptId) {
+    console.warn("companyId and promptId are required for getPromptRuns");
+    return [];
+  }
+
+  try {
+    const runsRef = collection(db, "companies", companyId, "prompts", promptId, "runs");
+    const runsSnap = await getDocs(runsRef);
+
+    const runs = runsSnap.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        // Convert Firestore timestamp to JS Date if needed
+        createdAt: data.createdAt?.toDate?.() || data.createdAt,
+      };
+    });
+
+    // Sort by createdAt descending (newest first)
+    return runs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  } catch (error) {
+    console.error("Error fetching runs from Firestore:", error);
+    return [];
+  }
+};
+
+/**
+ * Save a run to the database
+ * This is a pure database operation - does not contain business logic
+ */
+export const savePromptRun = async (companyId, promptId, runData) => {
+  const {
+    mentionPercentage,
+    position,
+    detailedRuns = [],
+    competitorMetrics = {},
+    analyzedAt
+  } = runData;
+
+  if (useMockData) {
+    const mockRun = {
+      id: `run-${Date.now()}`,
+      promptId,
+      createdAt: new Date().toISOString(),
+      mentionPercentage,
+      position,
+      detailedRuns,
+      competitorMetrics,
+      analyzedAt,
+    };
+
+    if (!mockRuns[promptId]) {
+      mockRuns[promptId] = [];
+    }
+    mockRuns[promptId].unshift(mockRun);
+
+    return mockRun;
+  }
+
+  if (!companyId || !promptId) {
+    console.warn("companyId and promptId are required for savePromptRun");
+    throw new Error("Company ID and Prompt ID are required");
+  }
+
+  try {
+    const runsRef = collection(db, "companies", companyId, "prompts", promptId, "runs");
+    const now = new Date();
+
+    const newRun = {
+      promptId,
+      createdAt: now,
+      mentionPercentage,
+      position,
+      detailedRuns,
+      competitorMetrics,
+      analyzedAt,
+    };
+
+    const docRef = await addDoc(runsRef, newRun);
+
+    // Update parent prompt with latest metrics
+    const promptRef = doc(db, "companies", companyId, "prompts", promptId);
+    await updateDoc(promptRef, {
+      lastUpdated: now,
+      mentionRate: mentionPercentage,
+    });
+
+    return { id: docRef.id, ...newRun };
+  } catch (error) {
+    console.error("Error saving run to Firestore:", error);
+    throw error;
+  }
+};
+
+/**
+ * Execute a prompt and save the results
+ * This orchestrates the analysis and database write
+ */
+export const executePromptRun = async (companyId, promptId, promptData) => {
+  const { text: promptText, companyName, competitors = [] } = promptData;
+
+  // Extract competitor names from competitors array
+  const competitorNames = competitors.map(c => c.name || c);
+
+  // Step 1: Run the analysis (isolated business logic in promptRunner.js)
+  const analysisResult = await runPromptAnalysis({
+    promptText,
+    companyName,
+    competitorNames,
+  });
+
+  // Step 2: Save the results to database
+  const savedRun = await savePromptRun(companyId, promptId, analysisResult);
+
+  return savedRun;
 };
