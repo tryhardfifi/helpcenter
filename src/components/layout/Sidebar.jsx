@@ -1,0 +1,92 @@
+import { Link, useLocation } from 'react-router-dom';
+import { LayoutDashboard, FileText, Newspaper, Users, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { mockCompanyData } from '@/data/mockData';
+import { cn } from '@/lib/utils';
+
+const Sidebar = () => {
+  const location = useLocation();
+  const { user, logout } = useAuth();
+  const company = mockCompanyData.company;
+
+  const navItems = [
+    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/competitors', label: 'Competitors', icon: Users },
+    { path: '/prompts', label: 'Prompts', icon: FileText },
+    { path: '/articles', label: 'Articles', icon: Newspaper },
+  ];
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
+  return (
+    <div className="flex flex-col h-full w-64 border-r border-border bg-background">
+      {/* Header */}
+      <div className="p-6">
+        <h1 className="text-2xl font-bold">AI SEO</h1>
+        <p className="text-sm text-muted-foreground mt-1">{company.name}</p>
+      </div>
+
+      <Separator />
+
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-2">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : "text-foreground hover:bg-secondary"
+              )}
+            >
+              <Icon className="h-5 w-5" />
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <Separator />
+
+      {/* User section */}
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <Avatar>
+            <AvatarFallback className="bg-primary text-primary-foreground">
+              {user?.email?.[0]?.toUpperCase() || 'U'}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">
+              {user?.email || 'User'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {company.subscription.plan === 'pro' ? 'Pro Plan' : 'Free Plan'}
+            </p>
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          className="w-full justify-start"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Logout
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default Sidebar;
