@@ -125,10 +125,7 @@ const Prompts = () => {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>All Tracked Prompts</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Table>
             <TableHeader>
               <TableRow>

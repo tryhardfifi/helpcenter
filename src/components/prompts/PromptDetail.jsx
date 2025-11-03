@@ -20,7 +20,7 @@ const PromptDetail = ({ prompt, selectedRun, setSelectedRun }) => {
   const [runningPrompt, setRunningPrompt] = useState(false);
   const [chartData, setChartData] = useState({ mentions: [], rankings: [] });
   const [summaryStats, setSummaryStats] = useState({
-    totalMentions: 0,
+    mentionPercentage: 0,
     averagePosition: 0,
     coMentions: []
   });
@@ -70,6 +70,7 @@ const PromptDetail = ({ prompt, selectedRun, setSelectedRun }) => {
     // Calculate summary stats
     const runsWithMentions = runs.filter(r => r.position !== null && r.position !== undefined);
     const totalMentions = runsWithMentions.length;
+    const mentionPercentage = runs.length > 0 ? Math.round((totalMentions / runs.length) * 100) : 0;
     const averagePosition = totalMentions > 0
       ? Math.round(runsWithMentions.reduce((sum, r) => sum + r.position, 0) / totalMentions)
       : 0;
@@ -92,7 +93,7 @@ const PromptDetail = ({ prompt, selectedRun, setSelectedRun }) => {
       .map(([name]) => name);
 
     setSummaryStats({
-      totalMentions,
+      mentionPercentage,
       averagePosition,
       coMentions
     });
@@ -196,23 +197,17 @@ const PromptDetail = ({ prompt, selectedRun, setSelectedRun }) => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <p className="text-sm text-muted-foreground">Total Mentions</p>
+              <p className="text-sm text-muted-foreground">Mention Rate</p>
               <p className="text-2xl font-bold">
-                {summaryStats.totalMentions || prompt.totalMentions || 0}
+                {summaryStats.mentionPercentage || prompt.mentionRate || 0}%
               </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Average Position</p>
               <p className="text-2xl font-bold">
                 #{summaryStats.averagePosition || prompt.analytics?.averagePosition || '-'}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Co-mentions</p>
-              <p className="text-2xl font-bold">
-                {summaryStats.coMentions.length || prompt.analytics?.coMentions?.length || 0}
               </p>
             </div>
           </div>
@@ -230,27 +225,6 @@ const PromptDetail = ({ prompt, selectedRun, setSelectedRun }) => {
           title="Rankings Over Time"
         />
       </div>
-
-      {/* Co-mentions */}
-      {(summaryStats.coMentions.length > 0 || (prompt.analytics?.coMentions?.length > 0)) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Frequently Co-mentioned With</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {(summaryStats.coMentions.length > 0
-                ? summaryStats.coMentions
-                : prompt.analytics?.coMentions || []
-              ).map((company, index) => (
-                <Badge key={index} variant="secondary">
-                  {company}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Runs Table */}
       <RunsTable runs={runs} loading={runsLoading} onRunClick={setSelectedRun} />

@@ -358,41 +358,6 @@ const Competitors = () => {
         </Card>
       </div>
 
-      {/* Market Share */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Market Share (Current Month)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-4 gap-6">
-            {competitorData.map((company) => {
-              const total = competitorData.reduce((sum, c) => sum + c.mentions, 0);
-              const percentage = ((company.mentions / total) * 100).toFixed(1);
-
-              return (
-                <div key={company.key}>
-                  <div className="mb-2">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium">{company.name}</span>
-                      <span className="text-sm text-muted-foreground">{percentage}%</span>
-                    </div>
-                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                      <div
-                        className={`h-full ${company.isYou ? 'bg-black' : 'bg-gray-400'}`}
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {company.mentions} mentions
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Create Competitor Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>

@@ -107,7 +107,7 @@ export const mockCompanyData = {
       id: "prompt-1",
       companyId: "acme-inc-123",
       text: "What are the best project management tools for startups?",
-      mentionRate: 70.0,
+      mentionRate: 80,
       createdAt: "2024-01-10",
       lastUpdated: "2024-03-15",
       totalMentions: 145,
@@ -136,7 +136,7 @@ export const mockCompanyData = {
       id: "prompt-2",
       companyId: "acme-inc-123",
       text: "Compare enterprise software solutions for team collaboration",
-      mentionRate: 55.2,
+      mentionRate: 60,
       createdAt: "2024-01-12",
       lastUpdated: "2024-03-14",
       totalMentions: 112,
@@ -165,7 +165,7 @@ export const mockCompanyData = {
       id: "prompt-3",
       companyId: "acme-inc-123",
       text: "Which companies offer AI-powered analytics?",
-      mentionRate: 27.0,
+      mentionRate: 30,
       createdAt: "2024-01-15",
       lastUpdated: "2024-03-13",
       totalMentions: 54,
@@ -194,7 +194,7 @@ export const mockCompanyData = {
       id: "prompt-4",
       companyId: "acme-inc-123",
       text: "Best B2B SaaS tools for productivity",
-      mentionRate: 58.0,
+      mentionRate: 70,
       createdAt: "2024-01-18",
       lastUpdated: "2024-03-12",
       totalMentions: 118,
@@ -223,7 +223,7 @@ export const mockCompanyData = {
       id: "prompt-5",
       companyId: "acme-inc-123",
       text: "Top-rated business intelligence platforms",
-      mentionRate: 24.0,
+      mentionRate: 20,
       createdAt: "2024-01-20",
       lastUpdated: "2024-03-11",
       totalMentions: 48,
@@ -539,6 +539,18 @@ const generateMockDetailedRuns = (mentionPercentage, avgPosition) => {
   const runs = [];
   const mentionCount = Math.round(mentionPercentage / 10); // How many out of 10 mentioned us
 
+  // Mock sources pool
+  const mockSources = [
+    { url: "https://www.g2.com/categories/project-management", title: "Best Project Management Software 2025 - G2" },
+    { url: "https://www.capterra.com/project-management-software/", title: "Best Project Management Software - Capterra" },
+    { url: "https://www.forbes.com/advisor/business/software/best-project-management-software/", title: "Best Project Management Software - Forbes" },
+    { url: "https://www.softwareadvice.com/project-management/", title: "Project Management Software Reviews - Software Advice" },
+    { url: "https://www.pcmag.com/picks/the-best-project-management-software", title: "The Best Project Management Software - PCMag" },
+    { url: "https://www.techradar.com/best/best-project-management-software", title: "Best Project Management Software - TechRadar" },
+    { url: "https://www.business.com/categories/project-management-software/best/", title: "Best Project Management Tools - Business.com" },
+    { url: "https://www.trustradius.com/project-management", title: "Top Project Management Software - TrustRadius" }
+  ];
+
   for (let i = 0; i < 10; i++) {
     const isMentioned = i < mentionCount;
     const position = isMentioned && avgPosition ? Math.max(1, avgPosition + Math.floor(Math.random() * 3) - 1) : null; // Vary around avg, min 1
@@ -559,8 +571,35 @@ const generateMockDetailedRuns = (mentionPercentage, avgPosition) => {
     // Sort by position
     mentions.sort((a, b) => a.pos - b.pos);
 
+    const annotations = [];
+    const sources = [];
+
     mentions.forEach(m => {
+      const lineStart = conversationText.length;
       conversationText += `${m.pos}. **${m.name}** - ${m.desc}\n`;
+      const lineEnd = conversationText.length - 1;
+
+      // Add 1-2 random citations for each company
+      const numCitations = Math.floor(Math.random() * 2) + 1;
+      for (let j = 0; j < numCitations; j++) {
+        const source = mockSources[Math.floor(Math.random() * mockSources.length)];
+
+        // Check if source already exists
+        let sourceIndex = sources.findIndex(s => s.url === source.url);
+        if (sourceIndex === -1) {
+          sources.push({ ...source, id: sources.length + 1 });
+          sourceIndex = sources.length - 1;
+        }
+
+        annotations.push({
+          type: "url_citation",
+          start_index: lineStart,
+          end_index: lineEnd,
+          url: source.url,
+          title: source.title,
+          source_id: sourceIndex + 1
+        });
+      }
     });
 
     conversationText += `\n\nEach of these options has its strengths, so the best choice depends on your specific needs and requirements.`;
@@ -568,6 +607,8 @@ const generateMockDetailedRuns = (mentionPercentage, avgPosition) => {
     runs.push({
       runNumber: i + 1,
       conversation: conversationText,
+      annotations: annotations,
+      sources: sources,
       ourCompany: {
         name: 'Acme Inc.',
         mentioned: isMentioned,

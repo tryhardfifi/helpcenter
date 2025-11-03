@@ -121,8 +121,8 @@ function generateMockConversation(companyName, competitorNames = []) {
     companyPositions[company] = idx + 1;
   });
 
-  // Generate conversation
-  const conversation = generateConversationText(mentionedCompanies, companyPositions);
+  // Generate conversation with citations
+  const conversationData = generateConversationText(mentionedCompanies, companyPositions);
 
   // Build result structure
   const ourCompany = {
@@ -140,19 +140,21 @@ function generateMockConversation(companyName, competitorNames = []) {
   }));
 
   return {
-    conversation,
+    conversation: conversationData.text,
+    annotations: conversationData.annotations,
+    sources: conversationData.sources,
     ourCompany,
     competitors
   };
 }
 
 /**
- * Generate realistic conversation text
+ * Generate realistic conversation text with citations
  *
  * @private
  * @param {Array<string>} companies - Companies to mention
  * @param {Object} positions - Position map for each company
- * @returns {string} Conversation text
+ * @returns {Object} Object containing text, annotations, and sources
  */
 function generateConversationText(companies, positions) {
   const intros = [
@@ -173,14 +175,6 @@ function generateConversationText(companies, positions) {
     "excels in ease of use and integration capabilities"
   ];
 
-  let conversation = intros[Math.floor(Math.random() * intros.length)] + "\n\n";
-
-  companies.forEach((company, idx) => {
-    const position = positions[company];
-    const description = descriptions[Math.floor(Math.random() * descriptions.length)];
-    conversation += `${position}. **${company}** - ${description}\n`;
-  });
-
   const outros = [
     "\n\nEach of these options has its strengths, so the best choice depends on your specific needs and requirements.",
     "\n\nI recommend evaluating each based on your specific use case and budget.",
@@ -188,9 +182,65 @@ function generateConversationText(companies, positions) {
     "\n\nConsider trying free trials of these options to see which fits best."
   ];
 
-  conversation += outros[Math.floor(Math.random() * outros.length)];
+  // Mock sources pool
+  const mockSources = [
+    { url: "https://www.g2.com/categories/project-management", title: "Best Project Management Software 2025 - G2" },
+    { url: "https://www.capterra.com/project-management-software/", title: "Best Project Management Software - Capterra" },
+    { url: "https://www.forbes.com/advisor/business/software/best-project-management-software/", title: "Best Project Management Software - Forbes" },
+    { url: "https://www.softwareadvice.com/project-management/", title: "Project Management Software Reviews - Software Advice" },
+    { url: "https://www.pcmag.com/picks/the-best-project-management-software", title: "The Best Project Management Software - PCMag" },
+    { url: "https://www.techradar.com/best/best-project-management-software", title: "Best Project Management Software - TechRadar" },
+    { url: "https://www.business.com/categories/project-management-software/best/", title: "Best Project Management Tools - Business.com" },
+    { url: "https://www.trustradius.com/project-management", title: "Top Project Management Software - TrustRadius" }
+  ];
 
-  return conversation;
+  const intro = intros[Math.floor(Math.random() * intros.length)];
+  let text = intro + "\n\n";
+  const annotations = [];
+  const sources = [];
+
+  companies.forEach((company, idx) => {
+    const position = positions[company];
+    const description = descriptions[Math.floor(Math.random() * descriptions.length)];
+    const companyLine = `${position}. **${company}** - ${description}`;
+
+    const startIndex = text.length;
+    text += companyLine;
+    const endIndex = text.length;
+
+    // Add 1-2 random citations for each company
+    const numCitations = Math.floor(Math.random() * 2) + 1;
+    for (let i = 0; i < numCitations; i++) {
+      const source = mockSources[Math.floor(Math.random() * mockSources.length)];
+
+      // Check if source already exists
+      let sourceIndex = sources.findIndex(s => s.url === source.url);
+      if (sourceIndex === -1) {
+        sources.push({ ...source, id: sources.length + 1 });
+        sourceIndex = sources.length - 1;
+      }
+
+      annotations.push({
+        type: "url_citation",
+        start_index: startIndex,
+        end_index: endIndex,
+        url: source.url,
+        title: source.title,
+        source_id: sourceIndex + 1
+      });
+    }
+
+    text += "\n";
+  });
+
+  const outro = outros[Math.floor(Math.random() * outros.length)];
+  text += outro;
+
+  return {
+    text,
+    annotations,
+    sources
+  };
 }
 
 /**

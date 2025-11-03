@@ -88,13 +88,11 @@ const RunsTable = ({ runs = [], loading = false, onRunClick }) => {
                   </TableCell>
                   <TableCell>
                     {run.position ? (
-                      <Badge variant="default" className="bg-green-600 hover:bg-green-700">
+                      <Badge variant="default" className="bg-gray-900 hover:bg-black">
                         Mentioned
                       </Badge>
                     ) : (
-                      <Badge variant="destructive">
-                        Not mentioned
-                      </Badge>
+                      <span className="inline-flex h-2 w-2 rounded-full bg-red-600"></span>
                     )}
                   </TableCell>
                   <TableCell className="text-right font-medium">

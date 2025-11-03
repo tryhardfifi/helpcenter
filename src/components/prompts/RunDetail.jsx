@@ -10,9 +10,9 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatRelativeTime } from '@/utils/dateUtils';
-import { ArrowLeft, User, Bot } from 'lucide-react';
+import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import ReactMarkdown from 'react-markdown';
+import ConversationWithCitations from './ConversationWithCitations';
 
 const RunDetail = ({ run, onBack, promptText }) => {
   if (!run) return null;
@@ -114,13 +114,11 @@ const RunDetail = ({ run, onBack, promptText }) => {
                 >
                   Run {idx + 1}
                   {run.ourCompany.mentioned ? (
-                    <Badge variant="default" className="ml-2 bg-green-600 hover:bg-green-700">
+                    <Badge variant="default" className="ml-2 bg-gray-900 hover:bg-black">
                       #{run.ourCompany.position}
                     </Badge>
                   ) : (
-                    <Badge variant="destructive" className="ml-2">
-                      Not mentioned
-                    </Badge>
+                    <span className="ml-2 inline-flex h-2 w-2 rounded-full bg-red-600"></span>
                   )}
                 </TabsTrigger>
               ))}
@@ -135,11 +133,16 @@ const RunDetail = ({ run, onBack, promptText }) => {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        <div className="flex justify-between">
+                        <div className="flex justify-between items-center">
                           <span className="text-sm text-muted-foreground">Status:</span>
-                          <Badge variant={run.ourCompany.mentioned ? 'default' : 'secondary'}>
-                            {run.ourCompany.mentioned ? 'Mentioned' : 'Not mentioned'}
-                          </Badge>
+                          {run.ourCompany.mentioned ? (
+                            <Badge variant="default" className="bg-gray-900">Mentioned</Badge>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex h-2 w-2 rounded-full bg-red-600"></span>
+                              <span className="text-sm text-muted-foreground">Not mentioned</span>
+                            </div>
+                          )}
                         </div>
                         {run.ourCompany.mentioned && (
                           <div className="flex justify-between">
@@ -183,51 +186,60 @@ const RunDetail = ({ run, onBack, promptText }) => {
                     <CardTitle className="text-base">Conversation</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {/* User message (prompt) */}
-                      <div className="flex gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                          <User className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-                            <p className="text-sm text-gray-800">{promptText || 'Prompt not available'}</p>
+                    <div className="space-y-6">
+                      {/* User message (prompt) - right aligned */}
+                      <div className="flex justify-end">
+                        <div className="max-w-[80%]">
+                          <div className="bg-gray-100 rounded-2xl px-4 py-3">
+                            <p className="text-sm text-gray-900">{promptText || 'Prompt not available'}</p>
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1">You</p>
                         </div>
                       </div>
 
-                      {/* Assistant message (GPT response) */}
-                      <div className="flex gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                          <Bot className="h-4 w-4 text-green-600" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                            {run.conversation ? (
-                              <div className="prose prose-sm max-w-none">
-                                <ReactMarkdown
-                                  components={{
-                                    p: ({ children }) => <p className="text-sm text-gray-800 mb-2 last:mb-0">{children}</p>,
-                                    strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
-                                    ul: ({ children }) => <ul className="list-disc list-inside space-y-1 my-2">{children}</ul>,
-                                    ol: ({ children }) => <ol className="list-decimal list-inside space-y-1 my-2">{children}</ol>,
-                                    li: ({ children }) => <li className="text-sm text-gray-800">{children}</li>,
-                                  }}
-                                >
-                                  {run.conversation}
-                                </ReactMarkdown>
-                              </div>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">No conversation data available</p>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">GPT Assistant</p>
-                        </div>
+                      {/* Assistant message (GPT response) with citations - left aligned, full width */}
+                      <div className="space-y-3">
+                        <ConversationWithCitations
+                          text={run.conversation}
+                          annotations={run.annotations}
+                          sources={run.sources}
+                        />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Cited Sources */}
+                {run.sources && run.sources.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Cited Sources</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {run.sources.map((source) => (
+                          <a
+                            key={source.id}
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-colors group"
+                          >
+                            <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full text-xs font-medium group-hover:bg-blue-200">
+                              {source.id}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 group-hover:text-blue-600 mb-1">
+                                {source.title}
+                              </p>
+                              <p className="text-xs text-gray-500 break-all">{source.url}</p>
+                            </div>
+                            <ExternalLink className="flex-shrink-0 h-4 w-4 text-gray-400 group-hover:text-blue-600" />
+                          </a>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
             ))}
           </Tabs>

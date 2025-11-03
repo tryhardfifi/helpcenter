@@ -44,8 +44,8 @@ const PromptCard = ({ prompt }) => {
         <CardContent>
           <div className="flex items-center justify-between text-sm">
             <div>
-              <span className="text-muted-foreground">Total Mentions:</span>
-              <span className="font-semibold ml-2">{prompt.totalMentions}</span>
+              <span className="text-muted-foreground">Mention Rate:</span>
+              <span className="font-semibold ml-2">{prompt.mentionRate}%</span>
             </div>
             <div>
               <span className="text-muted-foreground">Avg Position:</span>
