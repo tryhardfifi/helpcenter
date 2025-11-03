@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useCompanyData } from '@/contexts/CompanyDataContext';
-import { getDataSource } from '@/services/dataService';
+import { getDataSource, createCompetitor } from '@/services/dataService';
+import { useCompanyId } from '@/hooks/useCompanyId';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -10,14 +12,56 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Database } from 'lucide-react';
+import { Database, Plus } from 'lucide-react';
 
 const Competitors = () => {
-  const { company, loading } = useCompanyData();
+  const { company, loading, refetch } = useCompanyData();
+  const { companyId } = useCompanyId();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [competitorUrl, setCompetitorUrl] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const analytics = company?.analytics;
   const competitors = company?.competitors || [];
+
+  const handleCreateCompetitor = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    // Validate URL
+    try {
+      new URL(competitorUrl);
+    } catch {
+      setError('Please enter a valid URL');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await createCompetitor(companyId, competitorUrl);
+      setIsModalOpen(false);
+      setCompetitorUrl('');
+      refetch(); // Refresh the company data
+    } catch (err) {
+      setError(err.message || 'Failed to create competitor');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -114,11 +158,17 @@ const Competitors = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Competitors</h1>
-        <p className="text-muted-foreground mt-1">
-          Track your position against competitors
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Competitors</h1>
+          <p className="text-muted-foreground mt-1">
+            Track your position against competitors
+          </p>
+        </div>
+        <Button onClick={() => setIsModalOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Competitor
+        </Button>
       </div>
 
       {/* Competitor Ranking Table */}
@@ -342,6 +392,54 @@ const Competitors = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Create Competitor Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Competitor</DialogTitle>
+            <DialogDescription>
+              Enter the URL of a competitor website to track their performance.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreateCompetitor}>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="competitor-url">Competitor URL</Label>
+                <Input
+                  id="competitor-url"
+                  type="url"
+                  placeholder="https://example.com"
+                  value={competitorUrl}
+                  onChange={(e) => setCompetitorUrl(e.target.value)}
+                  required
+                  className="mt-1.5"
+                />
+                {error && (
+                  <p className="text-sm text-red-600 mt-2">{error}</p>
+                )}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setCompetitorUrl('');
+                  setError('');
+                }}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting || !competitorUrl.trim()}>
+                {isSubmitting ? 'Adding...' : 'Add Competitor'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

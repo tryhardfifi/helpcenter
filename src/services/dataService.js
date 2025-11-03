@@ -231,3 +231,55 @@ export const getArticleById = async (companyId, articleId) => {
     return null;
   }
 };
+
+// Competitor operations
+export const createCompetitor = async (companyId, competitorUrl) => {
+  if (useMockData) {
+    // For mock mode, just simulate success
+    console.log("Mock mode: Would create competitor with URL:", competitorUrl);
+    return {
+      id: `competitor-${Date.now()}`,
+      url: competitorUrl,
+      name: new URL(competitorUrl).hostname,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  if (!companyId) {
+    console.warn("No companyId provided to createCompetitor");
+    throw new Error("Company ID is required");
+  }
+
+  try {
+    const companyRef = doc(db, "companies", companyId);
+    const companySnap = await getDoc(companyRef);
+
+    if (!companySnap.exists()) {
+      throw new Error("Company not found");
+    }
+
+    const companyData = companySnap.data();
+    const competitors = companyData.competitors || [];
+
+    // Create new competitor object
+    const newCompetitor = {
+      id: `competitor-${Date.now()}`,
+      url: competitorUrl,
+      name: new URL(competitorUrl).hostname,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Add to competitors array
+    const updatedCompetitors = [...competitors, newCompetitor];
+
+    // Update company document
+    await updateDoc(companyRef, {
+      competitors: updatedCompetitors,
+    });
+
+    return newCompetitor;
+  } catch (error) {
+    console.error("Error creating competitor in Firestore:", error);
+    throw error;
+  }
+};
