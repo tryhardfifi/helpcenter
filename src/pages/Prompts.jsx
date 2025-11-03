@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { mockCompanyData } from '@/data/mockData';
+import { getCompanyPrompts, getDataSource } from '@/services/dataService';
+import { useCompanyId } from '@/hooks/useCompanyId';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -10,10 +12,26 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Database } from 'lucide-react';
 
 const Prompts = () => {
-  const prompts = mockCompanyData.prompts;
+  const { companyId, loading: loadingCompanyId } = useCompanyId();
+  const [prompts, setPrompts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (loadingCompanyId) return;
+
+      setLoading(true);
+      if (companyId) {
+        const data = await getCompanyPrompts(companyId);
+        setPrompts(data);
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, [companyId, loadingCompanyId]);
 
   const getTrendIcon = (trend) => {
     switch (trend) {
@@ -36,6 +54,65 @@ const Prompts = () => {
         return 'outline';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Prompts</h1>
+          <p className="text-muted-foreground mt-1">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (prompts.length === 0) {
+    const isFirestoreMode = !getDataSource();
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Prompts</h1>
+          <p className="text-muted-foreground mt-1">
+            Track AI mentions across different prompts
+          </p>
+        </div>
+
+        {isFirestoreMode && (
+          <Card className="border-orange-200 bg-orange-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-orange-900">
+                <Database className="h-5 w-5" />
+                Firestore Data Not Found
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-orange-900">
+              <p className="mb-3">
+                You're using Firestore mode, but no data has been seeded yet.
+              </p>
+              <div className="bg-white/50 p-3 rounded border border-orange-200">
+                <p className="font-semibold mb-2">To seed demo data, run:</p>
+                <code className="block bg-orange-100 px-3 py-2 rounded text-sm font-mono">
+                  npm run seed
+                </code>
+                <p className="text-sm mt-2 text-muted-foreground">
+                  Or with a custom email: <code className="bg-orange-100 px-1 rounded">npm run seed your@email.com</code>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {!isFirestoreMode && (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-muted-foreground">No prompts available</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -1,16 +1,29 @@
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, FileText, Users, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { getCompany } from '@/services/dataService';
+import { useCompanyId } from '@/hooks/useCompanyId';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { mockCompanyData } from '@/data/mockData';
+import DataSourceToggle from '@/components/ui/DataSourceToggle';
 import { cn } from '@/lib/utils';
 
 const Sidebar = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
-  const company = mockCompanyData.company;
+  const { companyId, loading: loadingCompanyId } = useCompanyId();
+  const [company, setCompany] = useState(null);
+
+  useEffect(() => {
+    const fetchCompany = async () => {
+      if (loadingCompanyId || !companyId) return;
+      const data = await getCompany(companyId);
+      setCompany(data);
+    };
+    fetchCompany();
+  }, [companyId, loadingCompanyId]);
 
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -27,7 +40,7 @@ const Sidebar = () => {
       {/* Header */}
       <div className="p-6">
         <h1 className="text-2xl font-bold">AI SEO</h1>
-        <p className="text-sm text-muted-foreground mt-1">{company.name}</p>
+        <p className="text-sm text-muted-foreground mt-1">{company?.name || 'Loading...'}</p>
       </div>
 
       <Separator />
@@ -60,6 +73,7 @@ const Sidebar = () => {
 
       {/* User section */}
       <div className="p-4 space-y-4">
+        <DataSourceToggle />
         <div className="flex items-center gap-3">
           <Avatar>
             <AvatarFallback className="bg-primary text-primary-foreground">
@@ -71,7 +85,7 @@ const Sidebar = () => {
               {user?.email || 'User'}
             </p>
             <p className="text-xs text-muted-foreground capitalize">
-              {company.subscription.plan} Plan
+              {company?.subscription?.plan || 'Loading...'} Plan
             </p>
           </div>
         </div>

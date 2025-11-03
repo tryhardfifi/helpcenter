@@ -1,0 +1,36 @@
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { getUserCompanyId } from '@/services/userService';
+import { getDataSource } from '@/services/dataService';
+
+// Custom hook to get the user's companyId
+export const useCompanyId = () => {
+  const { user } = useAuth();
+  const [companyId, setCompanyId] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCompanyId = async () => {
+      setLoading(true);
+
+      // In mock mode, use the hardcoded company ID
+      if (getDataSource()) {
+        setCompanyId('acme-inc-123');
+        setLoading(false);
+        return;
+      }
+
+      // In Firestore mode, fetch from user document
+      if (user?.email) {
+        const id = await getUserCompanyId(user.email);
+        setCompanyId(id);
+      }
+
+      setLoading(false);
+    };
+
+    fetchCompanyId();
+  }, [user]);
+
+  return { companyId, loading };
+};

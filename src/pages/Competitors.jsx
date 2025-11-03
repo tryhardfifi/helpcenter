@@ -1,4 +1,6 @@
-import { mockCompanyData } from '@/data/mockData';
+import { useState, useEffect } from 'react';
+import { getCompany, getDataSource } from '@/services/dataService';
+import { useCompanyId } from '@/hooks/useCompanyId';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -10,9 +12,79 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Database } from 'lucide-react';
 
 const Competitors = () => {
-  const { analytics, competitors } = mockCompanyData.company;
+  const { companyId, loading: loadingCompanyId } = useCompanyId();
+  const [analytics, setAnalytics] = useState(null);
+  const [competitors, setCompetitors] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (loadingCompanyId) return;
+
+      setLoading(true);
+      if (companyId) {
+        const company = await getCompany(companyId);
+        if (company) {
+          setAnalytics(company.analytics);
+          setCompetitors(company.competitors);
+        }
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, [companyId, loadingCompanyId]);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Competitors</h1>
+          <p className="text-muted-foreground mt-1">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!analytics) {
+    const isFirestoreMode = !getDataSource();
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Competitors</h1>
+          <p className="text-muted-foreground mt-1">No data available</p>
+        </div>
+
+        {isFirestoreMode && (
+          <Card className="border-orange-200 bg-orange-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-orange-900">
+                <Database className="h-5 w-5" />
+                Firestore Data Not Found
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-orange-900">
+              <p className="mb-3">
+                You're using Firestore mode, but no data has been seeded yet.
+              </p>
+              <div className="bg-white/50 p-3 rounded border border-orange-200">
+                <p className="font-semibold mb-2">To seed demo data, run:</p>
+                <code className="block bg-orange-100 px-3 py-2 rounded text-sm font-mono">
+                  npm run seed
+                </code>
+                <p className="text-sm mt-2 text-muted-foreground">
+                  Or with a custom email: <code className="bg-orange-100 px-1 rounded">npm run seed your@email.com</code>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
 
   // Calculate competitor stats
   const getCompetitorStats = (companyKey) => {
