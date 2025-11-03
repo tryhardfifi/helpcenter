@@ -1,5 +1,5 @@
-import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, Users, LogOut } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, FileText, Users, LogOut, Building2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanyData } from '@/contexts/CompanyDataContext';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 
 const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { company } = useCompanyData();
 
@@ -62,6 +63,22 @@ const Sidebar = () => {
       {/* User section */}
       <div className="p-4 space-y-4">
         <DataSourceToggle />
+
+        <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
+          <div className="flex items-center gap-2 text-xs">
+            <Building2 className="h-4 w-4" />
+            <span className="font-medium">Company</span>
+          </div>
+          <button
+            onClick={() => navigate('/settings')}
+            className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+          >
+            Settings
+          </button>
+        </div>
+
+        <Separator />
+
         <div className="flex items-center gap-3">
           <Avatar>
             <AvatarFallback className="bg-primary text-primary-foreground">

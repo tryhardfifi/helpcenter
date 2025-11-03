@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import Competitors from './pages/Competitors';
 import Prompts from './pages/Prompts';
 import PromptDetailPage from './pages/PromptDetailPage';
+import Settings from './pages/Settings';
 import AppLayout from './components/layout/AppLayout';
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
                 <Route path="/competitors" element={<Competitors />} />
                 <Route path="/prompts" element={<Prompts />} />
                 <Route path="/prompts/:id" element={<PromptDetailPage />} />
+                <Route path="/settings" element={<Settings />} />
               </Route>
             </Routes>
           </BrowserRouter>

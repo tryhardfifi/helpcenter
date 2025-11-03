@@ -12,8 +12,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
-const AttributionTable = ({ data, title = "Top Pages", company }) => {
+const AttributionTable = ({ data = [], title = "Top Pages", company }) => {
   const [selectedCompetitor, setSelectedCompetitor] = useState('own');
+
   const getTrendIcon = (trend) => {
     switch (trend) {
       case 'up':
@@ -45,6 +46,19 @@ const AttributionTable = ({ data, title = "Top Pages", company }) => {
       dataKey: comp.name.replace(/\s+/g, '').charAt(0).toLowerCase() + comp.name.replace(/\s+/g, '').slice(1)
     }))
   ];
+
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center py-8 text-muted-foreground">No data available</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

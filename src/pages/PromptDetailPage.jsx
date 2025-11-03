@@ -13,6 +13,23 @@ const PromptDetailPage = () => {
   // Find the prompt from cached data
   const prompt = prompts.find(p => p.id === id);
 
+  // If prompt is already loaded, show it immediately (even if context is still "loading")
+  if (prompt) {
+    return (
+      <div className="space-y-6">
+        <Link to="/prompts">
+          <Button variant="ghost" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Prompts
+          </Button>
+        </Link>
+
+        <PromptDetail prompt={prompt} />
+      </div>
+    );
+  }
+
+  // Only show loading if we're still waiting for data
   if (loading) {
     return (
       <div className="space-y-6">
@@ -29,6 +46,7 @@ const PromptDetailPage = () => {
     );
   }
 
+  // If not loading and prompt not found, show error
   if (!prompt) {
     const isFirestoreMode = !getDataSource();
 
@@ -75,19 +93,6 @@ const PromptDetailPage = () => {
       </div>
     );
   }
-
-  return (
-    <div className="space-y-6">
-      <Link to="/prompts">
-        <Button variant="ghost" className="gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Prompts
-        </Button>
-      </Link>
-
-      <PromptDetail prompt={prompt} />
-    </div>
-  );
 };
 
 export default PromptDetailPage;

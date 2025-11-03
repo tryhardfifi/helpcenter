@@ -35,6 +35,11 @@ export const mockCompanyData = {
       { id: "comp-2", name: "RivalTech" },
       { id: "comp-3", name: "IndustryCorp" },
     ],
+    members: [
+      { id: "member-1", email: "john@acme.com", role: "admin", status: "active", joinedAt: "2024-01-01" },
+      { id: "member-2", email: "sarah@acme.com", role: "member", status: "active", joinedAt: "2024-02-15" },
+      { id: "member-3", email: "mike@acme.com", role: "member", status: "active", joinedAt: "2024-03-20" },
+    ],
     // Dashboard analytics (stored at company level)
     analytics: {
       metrics: {

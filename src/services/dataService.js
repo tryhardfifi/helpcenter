@@ -1,5 +1,5 @@
 import { db } from "../lib/firebase";
-import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, updateDoc } from "firebase/firestore";
 import {
   getCompany as getMockCompany,
   getCompanyPrompts as getMockCompanyPrompts,
@@ -54,6 +54,28 @@ export const getCompany = async (companyId) => {
   } catch (error) {
     console.error("Error fetching company from Firestore:", error);
     return null;
+  }
+};
+
+export const updateCompany = async (companyId, updates) => {
+  if (useMockData) {
+    // For mock data, just simulate success
+    console.log("Mock mode: Would update company with:", updates);
+    return true;
+  }
+
+  if (!companyId) {
+    console.warn("No companyId provided to updateCompany");
+    return false;
+  }
+
+  try {
+    const companyRef = doc(db, "companies", companyId);
+    await updateDoc(companyRef, updates);
+    return true;
+  } catch (error) {
+    console.error("Error updating company in Firestore:", error);
+    throw error;
   }
 };
 
