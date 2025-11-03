@@ -43,8 +43,8 @@ const AttributionTable = ({ data, title = "Top Pages" }) => {
           <TableHeader>
             <TableRow>
               <TableHead>Page URL</TableHead>
-              <TableHead className="text-right">Mentions</TableHead>
-              <TableHead className="text-right">Percentage</TableHead>
+              <TableHead className="text-right">Mention Rate</TableHead>
+              <TableHead className="text-right">Share of Total</TableHead>
               <TableHead className="text-center">Trend</TableHead>
             </TableRow>
           </TableHeader>
@@ -52,7 +52,7 @@ const AttributionTable = ({ data, title = "Top Pages" }) => {
             {data.map((page, index) => (
               <TableRow key={index}>
                 <TableCell className="font-medium">{page.url}</TableCell>
-                <TableCell className="text-right">{page.mentions}</TableCell>
+                <TableCell className="text-right">{page.mentionRate}%</TableCell>
                 <TableCell className="text-right">{page.percentage}%</TableCell>
                 <TableCell className="text-center">
                   <Badge variant={getTrendVariant(page.trend)} className="gap-1">

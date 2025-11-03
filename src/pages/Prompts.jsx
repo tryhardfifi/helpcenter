@@ -55,7 +55,7 @@ const Prompts = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Prompt</TableHead>
-                <TableHead className="text-right">Total Mentions</TableHead>
+                <TableHead className="text-right">Mention Rate</TableHead>
                 <TableHead className="text-right">Avg Position</TableHead>
                 <TableHead className="text-center">Sentiment</TableHead>
                 <TableHead className="text-center">Trend</TableHead>
@@ -78,7 +78,7 @@ const Prompts = () => {
                       {prompt.text}
                     </Link>
                   </TableCell>
-                  <TableCell className="text-right">{prompt.totalMentions}</TableCell>
+                  <TableCell className="text-right">{prompt.mentionRate}%</TableCell>
                   <TableCell className="text-right">#{prompt.analytics.averagePosition}</TableCell>
                   <TableCell className="text-center">
                     <Badge variant="outline" className="capitalize">

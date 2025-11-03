@@ -19,25 +19,27 @@ const Dashboard = () => {
       {/* Metric Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
-          title="Total Mentions"
-          value={analytics.metrics.totalMentions.toLocaleString()}
-          change={analytics.metrics.growth}
+          title="Visibility Score"
+          value={analytics.metrics.visibilityScore}
+          suffix=""
           trend="up"
         />
         <MetricCard
-          title="Growth Rate"
-          value={analytics.metrics.growth}
+          title="Mention Rate"
+          value={analytics.metrics.promptCoverage}
           suffix="%"
           trend="up"
         />
         <MetricCard
-          title="Current Ranking"
-          value={`#${analytics.metrics.currentRanking}`}
-          trend="stable"
+          title="Avg. Probability"
+          value={analytics.metrics.avgProbability}
+          suffix="%"
+          trend="up"
         />
         <MetricCard
-          title="Top Page"
-          value={analytics.metrics.topPage.split('/').pop()}
+          title="Avg. Rank"
+          value={`#${analytics.metrics.avgRank}`}
+          trend="stable"
         />
       </div>
 

@@ -19,13 +19,13 @@ const Competitors = () => {
     const latestMentions = analytics.mentionsOverTime[analytics.mentionsOverTime.length - 1];
     const latestRanking = analytics.rankingsOverTime[analytics.rankingsOverTime.length - 1];
 
-    // Calculate growth
-    const firstMentions = analytics.mentionsOverTime[0][companyKey];
-    const lastMentions = latestMentions[companyKey];
-    const growth = ((lastMentions - firstMentions) / firstMentions * 100).toFixed(1);
+    // Calculate growth in percentage points
+    const firstMentionRate = analytics.mentionsOverTime[0][companyKey];
+    const lastMentionRate = latestMentions[companyKey];
+    const growth = (lastMentionRate - firstMentionRate).toFixed(1);
 
     return {
-      mentions: latestMentions[companyKey],
+      mentionRate: lastMentionRate,
       ranking: latestRanking[companyKey],
       growth: parseFloat(growth),
     };

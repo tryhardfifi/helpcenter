@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const MentionChart = ({ data, title = "Mentions Over Time" }) => {
+const MentionChart = ({ data, title = "Mention Rate Over Time (%)" }) => {
   return (
     <Card>
       <CardHeader>

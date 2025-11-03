@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, Newspaper, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -16,7 +16,6 @@ const Sidebar = () => {
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/competitors', label: 'Competitors', icon: Users },
     { path: '/prompts', label: 'Prompts', icon: FileText },
-    { path: '/articles', label: 'Articles', icon: Newspaper },
   ];
 
   const handleLogout = async () => {
