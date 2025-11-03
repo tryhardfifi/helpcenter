@@ -1,5 +1,5 @@
 import { db } from "../lib/firebase";
-import { doc, getDoc, collection, getDocs, updateDoc } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, updateDoc, addDoc } from "firebase/firestore";
 import {
   getCompany as getMockCompany,
   getCompanyPrompts as getMockCompanyPrompts,
@@ -125,6 +125,61 @@ export const getPromptById = async (companyId, promptId) => {
   } catch (error) {
     console.error("Error fetching prompt from Firestore:", error);
     return null;
+  }
+};
+
+export const createPrompt = async (companyId, promptText) => {
+  if (useMockData) {
+    // For mock mode, just simulate success
+    console.log("Mock mode: Would create prompt:", promptText);
+    return {
+      id: `prompt-${Date.now()}`,
+      text: promptText,
+      mentionRate: 0,
+      trend: "stable",
+      createdAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+      totalMentions: 0,
+      analytics: {
+        mentionsOverTime: [],
+        rankingsOverTime: [],
+        averagePosition: 0,
+        sentiment: "neutral",
+        coMentions: [],
+      },
+    };
+  }
+
+  if (!companyId) {
+    console.warn("No companyId provided to createPrompt");
+    throw new Error("Company ID is required");
+  }
+
+  try {
+    const promptsRef = collection(db, "companies", companyId, "prompts");
+    const now = new Date().toISOString();
+
+    const newPrompt = {
+      text: promptText,
+      mentionRate: 0,
+      trend: "stable",
+      createdAt: now,
+      lastUpdated: now,
+      totalMentions: 0,
+      analytics: {
+        mentionsOverTime: [],
+        rankingsOverTime: [],
+        averagePosition: 0,
+        sentiment: "neutral",
+        coMentions: [],
+      },
+    };
+
+    const docRef = await addDoc(promptsRef, newPrompt);
+    return { id: docRef.id, ...newPrompt };
+  } catch (error) {
+    console.error("Error creating prompt in Firestore:", error);
+    throw error;
   }
 };
 

@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import { useCompanyData } from '@/contexts/CompanyDataContext';
-import { getDataSource } from '@/services/dataService';
+import { useCompanyId } from '@/hooks/useCompanyId';
+import { getDataSource, createPrompt } from '@/services/dataService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -11,10 +13,25 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Minus, Database } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { TrendingUp, TrendingDown, Minus, Database, Plus } from 'lucide-react';
 
 const Prompts = () => {
-  const { prompts, loading } = useCompanyData();
+  const { prompts, loading, refetch } = useCompanyData();
+  const { companyId } = useCompanyId();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [promptText, setPromptText] = useState('');
+  const [creating, setCreating] = useState(false);
 
   const getTrendIcon = (trend) => {
     switch (trend) {
@@ -35,6 +52,23 @@ const Prompts = () => {
         return 'secondary';
       default:
         return 'outline';
+    }
+  };
+
+  const handleCreatePrompt = async () => {
+    if (!promptText.trim()) return;
+
+    setCreating(true);
+    try {
+      await createPrompt(companyId, promptText.trim());
+      await refetch();
+      setIsDialogOpen(false);
+      setPromptText('');
+    } catch (error) {
+      console.error('Error creating prompt:', error);
+      alert('Failed to create prompt');
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -99,11 +133,17 @@ const Prompts = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Prompts</h1>
-        <p className="text-muted-foreground mt-1">
-          Track AI mentions across different prompts
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Prompts</h1>
+          <p className="text-muted-foreground mt-1">
+            Track AI mentions across different prompts
+          </p>
+        </div>
+        <Button onClick={() => setIsDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Prompt
+        </Button>
       </div>
 
       <Card>
@@ -160,6 +200,52 @@ const Prompts = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Create Prompt Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Prompt</DialogTitle>
+            <DialogDescription>
+              Add a new prompt to track across AI answer engines
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="prompt-text">Prompt Text</Label>
+              <Input
+                id="prompt-text"
+                placeholder="e.g., What are the best project management tools?"
+                value={promptText}
+                onChange={(e) => setPromptText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !creating) {
+                    handleCreatePrompt();
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDialogOpen(false);
+                setPromptText('');
+              }}
+              disabled={creating}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreatePrompt}
+              disabled={!promptText.trim() || creating}
+            >
+              {creating ? 'Creating...' : 'Create Prompt'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
