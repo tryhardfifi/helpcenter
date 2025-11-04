@@ -81,7 +81,7 @@ const Sources = () => {
 
   // Process data for source type pie chart
   const sourceTypeData = useMemo(() => {
-    if (!company?.analytics?.topSources) return [];
+    if (!analytics?.topSources) return [];
 
     const typeCounts = {
       owned: 0,
@@ -89,7 +89,7 @@ const Sources = () => {
       publications: 0
     };
 
-    company.analytics.topSources.forEach(source => {
+    analytics.topSources.forEach(source => {
       if (source.type === 'own') {
         typeCounts.owned++;
       } else if (source.type === 'reddit') {
@@ -106,7 +106,7 @@ const Sources = () => {
       { name: 'Social', value: typeCounts.social, percentage: total > 0 ? ((typeCounts.social / total) * 100).toFixed(1) : 0, fill: '#525252' },
       { name: 'Publications', value: typeCounts.publications, percentage: total > 0 ? ((typeCounts.publications / total) * 100).toFixed(1) : 0, fill: '#a3a3a3' }
     ].filter(item => item.value > 0);
-  }, [company]);
+  }, [analytics]);
 
   const getTrendIcon = (trend) => {
     switch (trend) {
