@@ -10,9 +10,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, ArrowRight } from 'lucide-react';
 
 const TopPromptsTable = ({ data, title = "Top Prompts", company }) => {
   const [selectedCompetitor, setSelectedCompetitor] = useState('own');
@@ -65,71 +64,77 @@ const TopPromptsTable = ({ data, title = "Top Prompts", company }) => {
   );
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <CardTitle>{title}</CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/prompts">Show all</Link>
-            </Button>
-          </div>
-          <Tabs value={selectedCompetitor} onValueChange={setSelectedCompetitor}>
-            <TabsList>
-              {competitors.map((competitor) => (
-                <TabsTrigger key={competitor.id} value={competitor.id}>
-                  {competitor.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-auto">Prompt</TableHead>
-              <TableHead className="text-right w-32">Mention Rate</TableHead>
-              <TableHead className="text-right w-32">Avg. Rank</TableHead>
-              <TableHead className="text-center w-28">Trend</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedData.map((prompt, index) => {
-              const mentionRate = getCompetitorMentionRate(prompt);
-              const latestRankings = prompt.analytics?.rankingsOverTime?.[prompt.analytics.rankingsOverTime.length - 1];
-              const rank = latestRankings?.[selectedDataKey] || 'N/A';
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <CardTitle>{title}</CardTitle>
+        <Tabs value={selectedCompetitor} onValueChange={setSelectedCompetitor}>
+          <TabsList>
+            {competitors.map((competitor) => (
+              <TabsTrigger key={competitor.id} value={competitor.id}>
+                {competitor.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
+      <Card className="m-0">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-auto">Prompt</TableHead>
+                <TableHead className="text-right w-32">Mention Rate</TableHead>
+                <TableHead className="text-right w-32">Avg. Rank</TableHead>
+                <TableHead className="text-center w-28">Trend</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedData.map((prompt, index) => {
+                const mentionRate = getCompetitorMentionRate(prompt);
+                const latestRankings = prompt.analytics?.rankingsOverTime?.[prompt.analytics.rankingsOverTime.length - 1];
+                const rank = latestRankings?.[selectedDataKey] || 'N/A';
 
-              return (
-                <TableRow
-                  key={prompt.id || index}
-                  className="cursor-pointer hover:bg-secondary/50"
-                  onClick={() => window.location.href = `/prompts/${prompt.id}`}
-                >
-                  <TableCell className="font-medium max-w-md">
-                    <Link
-                      to={`/prompts/${prompt.id}`}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {prompt.text}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="text-right font-semibold w-32">{mentionRate}%</TableCell>
-                  <TableCell className="text-right font-semibold w-32">{rank}</TableCell>
-                  <TableCell className="text-center w-28">
-                    <Badge variant={getTrendVariant(prompt.trend)} className="gap-1">
-                      {getTrendIcon(prompt.trend)}
-                      {prompt.trend}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+                return (
+                  <TableRow
+                    key={prompt.id || index}
+                    className="cursor-pointer hover:bg-secondary/50"
+                    onClick={() => window.location.href = `/prompts/${prompt.id}`}
+                  >
+                    <TableCell className="font-medium max-w-md">
+                      <Link
+                        to={`/prompts/${prompt.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {prompt.text}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-right font-semibold w-32">{mentionRate}%</TableCell>
+                    <TableCell className="text-right font-semibold w-32">{rank}</TableCell>
+                    <TableCell className="text-center w-28">
+                      <Badge variant={getTrendVariant(prompt.trend)} className="gap-1">
+                        {getTrendIcon(prompt.trend)}
+                        {prompt.trend}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              <TableRow className="hover:bg-secondary/50">
+                <TableCell colSpan={4} className="text-center">
+                  <Link
+                    to="/prompts"
+                    className="inline-flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
+                  >
+                    Show all
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
