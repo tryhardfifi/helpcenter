@@ -43,7 +43,7 @@ const RunDetail = ({ run, onBack, promptText }) => {
       <Separator />
 
       {/* Overall Summary */}
-      <Card className="border-2">
+      <Card>
         <CardHeader>
           <CardTitle className="text-xl">Performance Overview</CardTitle>
           <CardDescription>Aggregate metrics across all 10 runs</CardDescription>
@@ -178,7 +178,7 @@ const RunDetail = ({ run, onBack, promptText }) => {
               <TabsContent key={idx} value={`run-${idx + 1}`} className="space-y-6 mt-6">
                 {/* Run Summary */}
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Card className={run.ourCompany.mentioned ? 'border-primary/20' : 'border-destructive/20'}>
+                  <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base flex items-center gap-2">
                         {run.ourCompany.mentioned ? (
