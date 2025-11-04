@@ -12,7 +12,7 @@ const LoginForm = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
-  const { login, signup } = useAuth();
+  const { login, signup, checkOnboardingStatus } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -25,7 +25,19 @@ const LoginForm = () => {
       : await login(email, password);
 
     if (result.success) {
-      navigate('/dashboard');
+      // Check if user needs onboarding
+      if (result.isNewUser) {
+        // New signup - always go to onboarding
+        navigate('/onboarding');
+      } else {
+        // Existing user - check if they completed onboarding
+        const onboardingStatus = await checkOnboardingStatus(email);
+        if (onboardingStatus.needsOnboarding) {
+          navigate('/onboarding');
+        } else {
+          navigate('/dashboard');
+        }
+      }
     } else {
       setError(result.error);
     }

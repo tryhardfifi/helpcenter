@@ -5,7 +5,8 @@ import {
   onAuthStateChanged,
   createUserWithEmailAndPassword
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 const AuthContext = createContext({});
 
@@ -42,7 +43,17 @@ export const AuthProvider = ({ children }) => {
   const signup = async (email, password) => {
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
-      return { success: true, user: result.user };
+
+      // Create user document in Firestore
+      const userRef = doc(db, 'users', email);
+      await setDoc(userRef, {
+        email,
+        createdAt: new Date().toISOString(),
+        role: 'owner',
+        onboardingCompleted: false
+      });
+
+      return { success: true, user: result.user, isNewUser: true };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -57,12 +68,37 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const checkOnboardingStatus = async (userEmail) => {
+    try {
+      const userRef = doc(db, 'users', userEmail);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        return { needsOnboarding: true, hasCompany: false };
+      }
+
+      const userData = userSnap.data();
+      const hasCompany = !!userData.companyId;
+      const onboardingCompleted = userData.onboardingCompleted || false;
+
+      return {
+        needsOnboarding: !hasCompany || !onboardingCompleted,
+        hasCompany,
+        companyId: userData.companyId
+      };
+    } catch (error) {
+      console.error('Error checking onboarding status:', error);
+      return { needsOnboarding: true, hasCompany: false };
+    }
+  };
+
   const value = {
     user,
     loading,
     login,
     signup,
     logout,
+    checkOnboardingStatus,
   };
 
   return (
