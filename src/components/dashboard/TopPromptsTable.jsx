@@ -102,10 +102,21 @@ const TopPromptsTable = ({ data, title = "Top Prompts", company }) => {
               const rank = latestRankings?.[selectedDataKey] || 'N/A';
 
               return (
-                <TableRow key={prompt.id || index}>
-                  <TableCell className="font-medium max-w-md">{prompt.text}</TableCell>
+                <TableRow
+                  key={prompt.id || index}
+                  className="cursor-pointer hover:bg-secondary/50"
+                  onClick={() => window.location.href = `/prompts/${prompt.id}`}
+                >
+                  <TableCell className="font-medium max-w-md">
+                    <Link
+                      to={`/prompts/${prompt.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {prompt.text}
+                    </Link>
+                  </TableCell>
                   <TableCell className="text-right font-semibold w-32">{mentionRate}%</TableCell>
-                  <TableCell className="text-right font-semibold w-32">#{rank}</TableCell>
+                  <TableCell className="text-right font-semibold w-32">{rank}</TableCell>
                   <TableCell className="text-center w-28">
                     <Badge variant={getTrendVariant(prompt.trend)} className="gap-1">
                       {getTrendIcon(prompt.trend)}

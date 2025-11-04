@@ -131,7 +131,7 @@ const Prompts = () => {
               <TableRow>
                 <TableHead>Prompt</TableHead>
                 <TableHead className="text-right">Mention Rate</TableHead>
-                <TableHead className="text-right">Avg Position</TableHead>
+                <TableHead className="text-right">Avg. Rank</TableHead>
                 <TableHead className="text-right">Last Updated</TableHead>
               </TableRow>
             </TableHeader>
@@ -145,14 +145,13 @@ const Prompts = () => {
                   <TableCell className="font-medium max-w-md">
                     <Link
                       to={`/prompts/${prompt.id}`}
-                      className="hover:underline"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {prompt.text}
                     </Link>
                   </TableCell>
-                  <TableCell className="text-right">{prompt.mentionRate}%</TableCell>
-                  <TableCell className="text-right">#{prompt.analytics.averagePosition}</TableCell>
+                  <TableCell className="text-right font-semibold">{prompt.mentionRate}%</TableCell>
+                  <TableCell className="text-right font-semibold">{prompt.analytics.averagePosition}</TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">
                     {formatRelativeTime(prompt.lastUpdated)}
                   </TableCell>
