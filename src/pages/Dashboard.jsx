@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useCompanyData } from '@/contexts/CompanyDataContext';
 import { getDataSource, executePromptRun, getAllPromptRuns, saveAnalytics } from '@/services/dataService';
 import { runAllPromptsAndComputeAnalytics } from '@/services/bulkPromptRunner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Database, Play } from 'lucide-react';
+import { Database, Play, Trophy, CheckCircle, Target } from 'lucide-react';
 import MetricCard from '@/components/dashboard/MetricCard';
 import KPIChart from '@/components/dashboard/KPIChart';
 import AttributionTable from '@/components/dashboard/AttributionTable';
@@ -12,11 +12,48 @@ import TopPromptsTable from '@/components/dashboard/TopPromptsTable';
 
 const Dashboard = () => {
   const { company, prompts, analytics, loading, refetch } = useCompanyData();
-  const [activeKPI, setActiveKPI] = useState('visibilityScore');
+  const [activeKPI, setActiveKPI] = useState('visibilityRank');
   const [runningAllPrompts, setRunningAllPrompts] = useState(false);
   const [bulkRunProgress, setBulkRunProgress] = useState({ current: 0, total: 0 });
 
   const hasAnalytics = analytics && analytics.metrics;
+
+  // Calculate visibility rank based on visibility score compared to competitors
+  const visibilityRankData = useMemo(() => {
+    if (!hasAnalytics) return { rank: null, total: 0 };
+
+    const companyScore = analytics.metrics.visibilityScore || 0;
+    const competitors = analytics.competitors || [];
+
+    // Create array of all companies with their scores
+    const allScores = [
+      { name: company?.name, score: companyScore, isOurCompany: true },
+      ...competitors.map(comp => ({
+        name: comp.name || comp,
+        score: analytics.metrics[comp.name || comp]?.visibilityScore ||
+               analytics.metrics.competitors?.[comp.name || comp]?.visibilityScore || 0,
+        isOurCompany: false
+      }))
+    ];
+
+    // Sort by score descending (highest score = rank 1)
+    allScores.sort((a, b) => b.score - a.score);
+
+    // Find our company's rank
+    const ourRank = allScores.findIndex(item => item.isOurCompany) + 1;
+
+    return { rank: ourRank, total: allScores.length };
+  }, [hasAnalytics, analytics, company]);
+
+  // Calculate mention details (times mentioned out of total)
+  const mentionDetails = useMemo(() => {
+    if (!hasAnalytics) return { mentioned: 0, total: 0 };
+
+    const totalMentions = analytics.metrics.totalMentions || 0;
+    const totalRuns = analytics.metrics.totalRuns || 0;
+
+    return { mentioned: totalMentions, total: totalRuns };
+  }, [hasAnalytics, analytics]);
 
   const handleRunAllPrompts = async () => {
     if (!company) {
@@ -153,9 +190,9 @@ const Dashboard = () => {
 
   // Map KPI types to their corresponding data
   const kpiDataMap = {
-    visibilityScore: analytics?.visibilityScoreOverTime || [],
-    mentionRate: analytics?.mentionsOverTime || [],
-    avgRank: analytics?.rankingsOverTime || [],
+    visibilityRank: analytics?.rankingsOverTime || [],
+    mentioned: analytics?.mentionsOverTime || [],
+    position: analytics?.rankingsOverTime || [],
   };
 
   return (
@@ -164,7 +201,7 @@ const Dashboard = () => {
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground mt-1">
-            Overview of your AI mentions and rankings
+            Overview of your AI performance
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
@@ -187,29 +224,32 @@ const Dashboard = () => {
       {/* Metric Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <MetricCard
-          title="Visibility Score"
-          value={hasAnalytics ? analytics.metrics.visibilityScore : '-'}
-          suffix={hasAnalytics ? '' : ''}
+          title="Visibility Rank"
+          value={visibilityRankData.rank ? visibilityRankData.rank : '-'}
+          subtitle={visibilityRankData.total > 0 ? `out of ${visibilityRankData.total} competitors` : ''}
+          icon={Trophy}
           trend="up"
-          onClick={() => setActiveKPI('visibilityScore')}
-          isActive={activeKPI === 'visibilityScore'}
-          info="The visibility score is calculated from the % of prompts you rank, the average probability for you to appear and the position of your business compared to your competitors. It helps compare the overall AI visibility between you and your competitors."
+          onClick={() => setActiveKPI('visibilityRank')}
+          isActive={activeKPI === 'visibilityRank'}
         />
         <MetricCard
-          title="Mention Rate"
+          title="Mentioned"
           value={hasAnalytics ? analytics.metrics.promptCoverage : '-'}
           suffix={hasAnalytics ? '%' : ''}
+          subtitle={mentionDetails.total > 0 ? `${mentionDetails.mentioned} out of ${mentionDetails.total} times you're mentioned` : ''}
+          icon={CheckCircle}
           trend="up"
-          onClick={() => setActiveKPI('mentionRate')}
-          isActive={activeKPI === 'mentionRate'}
-          info="The share of prompts that your business can appear in."
+          onClick={() => setActiveKPI('mentioned')}
+          isActive={activeKPI === 'mentioned'}
         />
         <MetricCard
-          title="Avg. Rank"
-          value={hasAnalytics && analytics.metrics.avgRank ? `#${analytics.metrics.avgRank}` : '-'}
+          title="Average Position"
+          value={hasAnalytics && analytics.metrics.avgRank ? analytics.metrics.avgRank : '-'}
+          subtitle="when mentioned"
+          icon={Target}
           trend="stable"
-          onClick={() => setActiveKPI('avgRank')}
-          isActive={activeKPI === 'avgRank'}
+          onClick={() => setActiveKPI('position')}
+          isActive={activeKPI === 'position'}
         />
       </div>
 

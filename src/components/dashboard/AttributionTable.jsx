@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -10,11 +9,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, TrendingDown, Minus, ExternalLink, ArrowRight } from 'lucide-react';
 
 const AttributionTable = ({ data = [], title = "Top Pages", company, analytics }) => {
-  const [selectedCompetitor, setSelectedCompetitor] = useState('own');
+  const selectedCompetitor = 'own';
 
   const getTrendIcon = (trend) => {
     switch (trend) {
@@ -66,10 +64,21 @@ const AttributionTable = ({ data = [], title = "Top Pages", company, analytics }
   const sortedData = data
     .map(source => ({
       ...source,
-      mentionRate: source[selectedDataKey] || 0
+      mentionRate: source[selectedDataKey] || 0,
+      mentionCount: source.competitorMentionCounts?.[selectedDataKey] || 0
     }))
     .sort((a, b) => b.mentionRate - a.mentionRate)
     .slice(0, 5); // Top 5 sources
+
+  // Helper function to get favicon URL from domain
+  const getFaviconUrl = (url) => {
+    try {
+      const domain = new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+    } catch {
+      return null;
+    }
+  };
 
   if (!data || data.length === 0) {
     return (
@@ -91,47 +100,56 @@ const AttributionTable = ({ data = [], title = "Top Pages", company, analytics }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <CardTitle>{title}</CardTitle>
-        {competitorsList.length > 1 && (
-          <Tabs value={selectedCompetitor} onValueChange={setSelectedCompetitor}>
-            <TabsList>
-              {competitorsList.map((competitor) => (
-                <TabsTrigger key={competitor.id} value={competitor.id}>
-                  {competitor.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        )}
-      </div>
+      <CardTitle>{title}</CardTitle>
       <Card className="m-0">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-auto">Source URL</TableHead>
-                <TableHead className="text-right w-32">Mention Rate</TableHead>
-                <TableHead className="text-right w-32">Share of Total</TableHead>
+                <TableHead className="w-auto">Source</TableHead>
+                <TableHead className="text-right w-40">Cited</TableHead>
                 <TableHead className="text-center w-28">Trend</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedData.map((page, index) => (
                 <TableRow key={index}>
-                  <TableCell className="font-medium">
+                  <TableCell className="font-medium p-0">
                     <a
                       href={page.url.startsWith('http') ? page.url : `https://${page.url}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 hover:text-primary transition-colors"
+                      className="flex items-start gap-3 p-4 hover:bg-secondary/50 transition-colors"
                     >
-                      {page.url}
-                      <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+                      {getFaviconUrl(page.url) && (
+                        <img
+                          src={getFaviconUrl(page.url)}
+                          alt=""
+                          className="w-8 h-8 rounded flex-shrink-0 mt-0.5"
+                          onError={(e) => e.target.style.display = 'none'}
+                        />
+                      )}
+                      <div className="flex flex-col gap-1 min-w-0">
+                        {page.title && (
+                          <div className="font-semibold text-sm truncate">
+                            {page.title}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
+                          {page.url}
+                          <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                        </div>
+                      </div>
                     </a>
                   </TableCell>
-                  <TableCell className="text-right font-semibold w-32">{page.mentionRate}%</TableCell>
-                  <TableCell className="text-right font-semibold w-32">{page.percentage}%</TableCell>
+                  <TableCell className="text-right w-40">
+                    <div className="flex flex-col items-end gap-0.5">
+                      <span className="font-semibold text-base">{page.mentionRate}%</span>
+                      <span className="text-xs text-muted-foreground">
+                        {page.mentionCount} out of {page.totalAppearances} times
+                      </span>
+                    </div>
+                  </TableCell>
                   <TableCell className="text-center w-28">
                     <Badge variant={getTrendVariant(page.trend)} className="gap-1">
                       {getTrendIcon(page.trend)}
@@ -140,15 +158,15 @@ const AttributionTable = ({ data = [], title = "Top Pages", company, analytics }
                   </TableCell>
                 </TableRow>
               ))}
-              <TableRow className="hover:bg-secondary/50">
-                <TableCell colSpan={4} className="text-center">
-                  <Link
-                    to="/sources"
-                    className="inline-flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
-                  >
+              <TableRow
+                className="cursor-pointer hover:bg-secondary/50"
+                onClick={() => window.location.href = '/sources'}
+              >
+                <TableCell colSpan={3} className="text-center py-4">
+                  <div className="inline-flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors">
                     Show all
                     <ArrowRight className="h-4 w-4" />
-                  </Link>
+                  </div>
                 </TableCell>
               </TableRow>
             </TableBody>

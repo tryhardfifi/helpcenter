@@ -3,7 +3,7 @@ import { TrendingUp, TrendingDown, Minus, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
-const MetricCard = ({ title, value, change, trend, suffix = '', onClick, isActive = false, info }) => {
+const MetricCard = ({ title, value, change, trend, suffix = '', onClick, isActive = false, info, icon: Icon, subtitle }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
   const trendColor = trend === 'up' ? 'text-black' : trend === 'down' ? 'text-gray-500' : 'text-gray-400';
@@ -18,6 +18,7 @@ const MetricCard = ({ title, value, change, trend, suffix = '', onClick, isActiv
     >
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+          {Icon && <Icon className="h-4 w-4" />}
           {title}
           {info && (
             <div className="relative inline-block">
@@ -41,8 +42,15 @@ const MetricCard = ({ title, value, change, trend, suffix = '', onClick, isActiv
       </CardHeader>
       <CardContent>
         <div className="flex items-baseline justify-between">
-          <div className="text-3xl font-bold">
-            {value}{suffix}
+          <div>
+            <div className="text-3xl font-bold">
+              {value}{suffix}
+            </div>
+            {subtitle && (
+              <div className="text-xs text-muted-foreground mt-1">
+                {subtitle}
+              </div>
+            )}
           </div>
           {change !== undefined && (
             <div className={cn("flex items-center gap-1 text-sm font-medium", trendColor)}>

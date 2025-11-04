@@ -4,6 +4,28 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 const KPIChart = ({ data, title, kpiType }) => {
   // Configuration for different KPI types
   const kpiConfig = {
+    visibilityRank: {
+      title: 'Visibility Rank Over Time',
+      yAxisLabel: 'Rank',
+      tooltipSuffix: '',
+      reversed: true,
+      domain: [1, 10],
+    },
+    mentioned: {
+      title: 'Mention Rate Over Time',
+      yAxisLabel: 'Mention Rate (%)',
+      tooltipSuffix: '%',
+      reversed: false,
+      domain: null,
+    },
+    position: {
+      title: 'Position Over Time',
+      yAxisLabel: 'Position',
+      tooltipSuffix: '',
+      reversed: true,
+      domain: [1, 10],
+    },
+    // Legacy support
     visibilityScore: {
       title: 'Visibility Score Over Time',
       yAxisLabel: 'Score',
@@ -52,7 +74,7 @@ const KPIChart = ({ data, title, kpiType }) => {
 
   // Custom tooltip formatter based on KPI type
   const tooltipFormatter = (value, name) => {
-    if (kpiType === 'avgRank') {
+    if (kpiType === 'avgRank' || kpiType === 'visibilityRank' || kpiType === 'position') {
       return [`#${value}`, name];
     }
     return [`${value}${config.tooltipSuffix}`, name];

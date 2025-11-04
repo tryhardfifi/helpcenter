@@ -324,8 +324,11 @@ function computeTopSources(allPromptRuns, companyName) {
   const sources = Array.from(sourceMap.values()).map(source => {
     const result = {
       url: source.url,
+      title: source.title,
       type: source.type,
-      trend: 'stable' // Could be computed from historical data
+      trend: 'stable', // Could be computed from historical data
+      totalAppearances: source.totalAppearances,
+      competitorMentionCounts: {} // Raw mention counts per competitor
     };
 
     // Add mention rate for each competitor
@@ -337,6 +340,7 @@ function computeTopSources(allPromptRuns, companyName) {
         : 0;
 
       result[compKey] = mentionRate;
+      result.competitorMentionCounts[compKey] = mentions;
     });
 
     // Calculate percentage (share of total appearances)
@@ -526,12 +530,16 @@ export function aggregateAnalyticsForDashboard(analyticsDocuments, companyName, 
     visibilityScore: latestDoc.metrics.company.visibilityScore,
     promptCoverage: latestDoc.metrics.company.mentionRate,
     avgProbability: latestDoc.metrics.company.avgProbability,
-    avgRank: latestDoc.metrics.company.avgRank || 0
+    avgRank: latestDoc.metrics.company.avgRank || 0,
+    totalMentions: latestDoc.metrics.company.totalMentions || 0,
+    totalRuns: latestDoc.metrics.company.totalRuns || 0
   } : {
     visibilityScore: 0,
     promptCoverage: 0,
     avgProbability: 0,
-    avgRank: 0
+    avgRank: 0,
+    totalMentions: 0,
+    totalRuns: 0
   };
 
   // Compute top sources if runs are provided
