@@ -108,10 +108,7 @@ const Competitors = () => {
 
       {/* Competitors Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Overview</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {competitorData.length === 0 ? (
             <p className="text-center py-8 text-muted-foreground">
               No competitor data available
