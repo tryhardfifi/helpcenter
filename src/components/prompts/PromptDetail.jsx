@@ -72,12 +72,15 @@ const PromptDetail = ({ prompt, selectedRun, setSelectedRun }) => {
       }
     });
 
-    // Calculate summary stats
-    const runsWithMentions = runs.filter(r => r.position !== null && r.position !== undefined);
-    const totalMentions = runsWithMentions.length;
-    const mentionPercentage = runs.length > 0 ? Math.round((totalMentions / runs.length) * 100) : 0;
-    const averagePosition = totalMentions > 0
-      ? Math.round(runsWithMentions.reduce((sum, r) => sum + r.position, 0) / totalMentions)
+    // Calculate summary stats - average the mentionPercentage and position from all runs
+    const mentionPercentage = runs.length > 0
+      ? Math.round(runs.reduce((sum, r) => sum + (r.mentionPercentage || 0), 0) / runs.length)
+      : 0;
+
+    // Average position from all runs (only count runs where position exists)
+    const runsWithPosition = runs.filter(r => r.position !== null && r.position !== undefined);
+    const averagePosition = runsWithPosition.length > 0
+      ? Math.round(runsWithPosition.reduce((sum, r) => sum + r.position, 0) / runsWithPosition.length)
       : 0;
 
     // Calculate co-mentions (companies frequently mentioned with us)
