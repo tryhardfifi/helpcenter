@@ -267,77 +267,80 @@ const Sources = () => {
       </div>
 
       {/* Sources Table with Filters */}
-      <Card>
-        <CardHeader>
-          <div className="space-y-4">
-            <CardTitle>All Sources</CardTitle>
+      <div className="space-y-4">
+        {/* Header with Title and Filters */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">All Sources</h2>
 
-            {/* Filter Tabs */}
-            <Tabs value={selectedFilter} onValueChange={setSelectedFilter}>
-              <TabsList>
-                {filters.map((filter) => (
-                  <TabsTrigger key={filter.id} value={filter.id}>
-                    {filter.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {filteredSources.length === 0 ? (
-            <p className="text-center py-8 text-muted-foreground">
-              No sources found for this filter
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-auto">Source URL</TableHead>
-                  <TableHead className="text-center w-24">Type</TableHead>
-                  <TableHead className="text-right w-32">Mention Rate</TableHead>
-                  <TableHead className="text-right w-32">Share of Total</TableHead>
-                  <TableHead className="text-center w-28">Trend</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSources.map((source, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">
-                      <a
-                        href={source.url.startsWith('http') ? source.url : `https://${source.url}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 hover:text-primary transition-colors"
-                      >
-                        {source.url}
-                        <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
-                      </a>
-                    </TableCell>
-                    <TableCell className="text-center w-24">
-                      <Badge variant={getTypeVariant(source.type)} className="text-xs">
-                        {getTypeLabel(source.type)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-semibold w-32">
-                      {source.mentionRate}%
-                    </TableCell>
-                    <TableCell className="text-right font-semibold w-32">
-                      {source.percentage}%
-                    </TableCell>
-                    <TableCell className="text-center w-28">
-                      <Badge variant={getTrendVariant(source.trend)} className="gap-1">
-                        {getTrendIcon(source.trend)}
-                        {source.trend}
-                      </Badge>
-                    </TableCell>
+          {/* Filter Tabs */}
+          <Tabs value={selectedFilter} onValueChange={setSelectedFilter}>
+            <TabsList>
+              {filters.map((filter) => (
+                <TabsTrigger key={filter.id} value={filter.id}>
+                  {filter.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
+
+        {/* Table Card */}
+        <Card>
+          <CardContent className="p-0">
+            {filteredSources.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground">
+                No sources found for this filter
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-auto">Source URL</TableHead>
+                    <TableHead className="text-center w-24">Type</TableHead>
+                    <TableHead className="text-right w-32">Mention Rate</TableHead>
+                    <TableHead className="text-right w-32">Share of Total</TableHead>
+                    <TableHead className="text-center w-28">Trend</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {filteredSources.map((source, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">
+                        <a
+                          href={source.url.startsWith('http') ? source.url : `https://${source.url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 hover:text-primary transition-colors"
+                        >
+                          {source.url}
+                          <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+                        </a>
+                      </TableCell>
+                      <TableCell className="text-center w-24">
+                        <Badge variant={getTypeVariant(source.type)} className="text-xs">
+                          {getTypeLabel(source.type)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold w-32">
+                        {source.mentionRate}%
+                      </TableCell>
+                      <TableCell className="text-right font-semibold w-32">
+                        {source.percentage}%
+                      </TableCell>
+                      <TableCell className="text-center w-28">
+                        <Badge variant={getTrendVariant(source.trend)} className="gap-1">
+                          {getTrendIcon(source.trend)}
+                          {source.trend}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
