@@ -155,7 +155,6 @@ const Dashboard = () => {
   const kpiDataMap = {
     visibilityScore: analytics?.visibilityScoreOverTime || [],
     mentionRate: analytics?.mentionsOverTime || [],
-    avgProbability: analytics?.avgProbabilityOverTime || [],
     avgRank: analytics?.rankingsOverTime || [],
   };
 
@@ -186,7 +185,7 @@ const Dashboard = () => {
       </div>
 
       {/* Metric Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <MetricCard
           title="Visibility Score"
           value={hasAnalytics ? analytics.metrics.visibilityScore : '-'}
@@ -204,15 +203,6 @@ const Dashboard = () => {
           onClick={() => setActiveKPI('mentionRate')}
           isActive={activeKPI === 'mentionRate'}
           info="The share of prompts that your business can appear in."
-        />
-        <MetricCard
-          title="Probability to Appear"
-          value={hasAnalytics ? analytics.metrics.avgProbability : '-'}
-          suffix={hasAnalytics ? '%' : ''}
-          trend="up"
-          onClick={() => setActiveKPI('avgProbability')}
-          isActive={activeKPI === 'avgProbability'}
-          info="For the prompts that your business does appear in, how likely it is to show up. This is because AI never responds the exact same way, so you might sometimes appear and sometimes not. If this number is higher, it means your business is more of a leader in your niche."
         />
         <MetricCard
           title="Avg. Rank"
