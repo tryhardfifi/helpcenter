@@ -76,16 +76,13 @@ const Competitors = () => {
     const filteredData = [...competitorData]
       .filter(comp => comp.averageRank > 0); // Only include those with a rank
 
-    // Find the max rank to invert values (so rank 1 shows as tallest bar)
-    const maxRank = Math.max(...filteredData.map(c => c.averageRank));
-
     return filteredData
       .sort((a, b) => a.averageRank - b.averageRank) // Lower rank is better
       .slice(0, 5)
       .map((comp, index) => ({
         name: comp.name,
         averageRank: comp.averageRank, // Keep actual rank for tooltip
-        invertedRank: maxRank + 1 - comp.averageRank, // Invert for bar height
+        invertedRank: 11 - comp.averageRank, // Rank 1 = 10, Rank 10 = 1
         isOwn: comp.isOwn,
         colorIndex: index
       }));
@@ -167,7 +164,7 @@ const Competitors = () => {
             <CardTitle>Mention Rate</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={350}>
+            <ResponsiveContainer width="100%" height={400}>
               <BarChart data={mentionRateChartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
                 <XAxis
@@ -207,7 +204,7 @@ const Competitors = () => {
             <CardTitle>Average Rank</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={350}>
+            <ResponsiveContainer width="100%" height={400}>
               <BarChart data={averageRankChartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
                 <XAxis
@@ -221,7 +218,10 @@ const Competitors = () => {
                 <YAxis
                   stroke="#000"
                   style={{ fontSize: '12px' }}
-                  label={{ value: 'Performance (higher is better)', angle: -90, position: 'insideLeft' }}
+                  label={{ value: 'Average Rank', angle: -90, position: 'insideLeft' }}
+                  domain={[0, 10]}
+                  ticks={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                  tickFormatter={(value) => (value > 0 ? 11 - value : '')}
                 />
                 <Tooltip
                   contentStyle={{
