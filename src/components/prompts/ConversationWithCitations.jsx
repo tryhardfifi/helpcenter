@@ -19,8 +19,8 @@ const ConversationWithCitations = ({ text, annotations = [], sources = [] }) => 
           components={{
             p: ({ children }) => <p className="text-sm text-gray-700 leading-relaxed mb-3 last:mb-0">{children}</p>,
             strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
-            ul: ({ children }) => <ul className="list-disc ml-4 space-y-2 my-3">{children}</ul>,
-            ol: ({ children }) => <ol className="list-decimal ml-4 space-y-2 my-3">{children}</ol>,
+            ul: ({ children }) => <ul className="list-disc ml-6 space-y-1 my-3">{children}</ul>,
+            ol: ({ children }) => <ol className="list-decimal ml-6 space-y-1 my-3">{children}</ol>,
             li: ({ children }) => <li className="text-sm text-gray-700 leading-relaxed">{children}</li>,
           }}
         >
@@ -30,81 +30,100 @@ const ConversationWithCitations = ({ text, annotations = [], sources = [] }) => 
     );
   }
 
-  // Group annotations by line/paragraph to insert bubbles
-  const lines = text.split('\n');
-  let currentIndex = 0;
+  // Insert citation markers into the text at annotation positions
+  // Sort annotations by end_index in descending order so we can insert from end to start
+  const sortedAnnotations = [...annotations].sort((a, b) => b.end_index - a.end_index);
 
-  const renderedLines = lines.map((line, lineIdx) => {
-    const lineStart = currentIndex;
-    const lineEnd = currentIndex + line.length;
+  // Group annotations by end position and deduplicate by source_id
+  const annotationsByPosition = new Map();
+  sortedAnnotations.forEach(ann => {
+    if (!annotationsByPosition.has(ann.end_index)) {
+      annotationsByPosition.set(ann.end_index, []);
+    }
+    const existing = annotationsByPosition.get(ann.end_index);
+    if (!existing.find(a => a.source_id === ann.source_id)) {
+      existing.push(ann);
+    }
+  });
 
-    // Find annotations that overlap with this line
-    const lineAnnotations = annotations.filter(ann =>
-      (ann.start_index >= lineStart && ann.start_index < lineEnd) ||
-      (ann.end_index > lineStart && ann.end_index <= lineEnd) ||
-      (ann.start_index <= lineStart && ann.end_index >= lineEnd)
-    );
+  // Insert markers into text (working backwards to preserve indices)
+  let markedText = text;
+  const markers = [];
+  Array.from(annotationsByPosition.entries())
+    .sort((a, b) => b[0] - a[0]) // Sort by position descending
+    .forEach(([position, anns]) => {
+      const markerId = `__CITE_${markers.length}__`;
+      markers.push({ id: markerId, annotations: anns });
+      markedText = markedText.slice(0, position) + markerId + markedText.slice(position);
+    });
 
-    // Group annotations by source to avoid duplicates on the same line
-    const uniqueSources = {};
-    lineAnnotations.forEach(ann => {
-      if (!uniqueSources[ann.source_id]) {
-        uniqueSources[ann.source_id] = ann;
+  // Custom text renderer that replaces markers with SourceBubbles
+  const components = {
+    p: ({ children }) => <p className="text-sm text-gray-700 leading-relaxed mb-3 last:mb-0">{processChildren(children)}</p>,
+    strong: ({ children }) => <strong className="font-semibold text-gray-900">{processChildren(children)}</strong>,
+    ul: ({ children }) => <ul className="list-disc ml-6 space-y-1 my-3">{children}</ul>,
+    ol: ({ children }) => <ol className="list-decimal ml-6 space-y-1 my-3">{children}</ol>,
+    li: ({ children }) => <li className="text-sm text-gray-700 leading-relaxed">{processChildren(children)}</li>,
+  };
+
+  // Process children to replace markers with SourceBubbles
+  function processChildren(children) {
+    if (typeof children === 'string') {
+      return replaceMarkersWithBubbles(children);
+    }
+    if (Array.isArray(children)) {
+      return children.map((child, idx) => {
+        if (typeof child === 'string') {
+          return <React.Fragment key={idx}>{replaceMarkersWithBubbles(child)}</React.Fragment>;
+        }
+        return child;
+      });
+    }
+    return children;
+  }
+
+  // Replace marker strings with SourceBubble components
+  function replaceMarkersWithBubbles(str) {
+    const parts = [];
+    let remainingStr = str;
+    let key = 0;
+
+    markers.forEach(({ id, annotations: anns }) => {
+      const index = remainingStr.indexOf(id);
+      if (index !== -1) {
+        // Add text before marker
+        if (index > 0) {
+          parts.push(remainingStr.slice(0, index));
+        }
+        // Add SourceBubbles for this position
+        anns.forEach((ann, idx) => {
+          parts.push(
+            <SourceBubble
+              key={`${id}-${idx}-${key++}`}
+              sourceId={ann.source_id}
+              url={ann.url}
+              title={ann.title}
+            />
+          );
+        });
+        // Continue with remaining text
+        remainingStr = remainingStr.slice(index + id.length);
       }
     });
 
-    currentIndex = lineEnd + 1; // +1 for the newline character
+    // Add any remaining text
+    if (remainingStr) {
+      parts.push(remainingStr);
+    }
 
-    return { line, annotations: Object.values(uniqueSources), key: lineIdx };
-  });
+    return parts.length > 0 ? parts : str;
+  }
 
   return (
     <div className="prose prose-sm max-w-none">
-      {renderedLines.map(({ line, annotations: lineAnnotations, key }) => {
-        if (!line.trim()) {
-          return <br key={key} />;
-        }
-
-        return (
-          <div key={key} className="mb-3 last:mb-0">
-            <ReactMarkdown
-              components={{
-                p: ({ children }) => (
-                  <p className="text-sm text-gray-700 leading-relaxed inline">
-                    {children}
-                    {lineAnnotations.map((ann, idx) => (
-                      <SourceBubble
-                        key={idx}
-                        sourceId={ann.source_id}
-                        url={ann.url}
-                        title={ann.title}
-                      />
-                    ))}
-                  </p>
-                ),
-                strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
-                ul: ({ children }) => <ul className="list-disc ml-4 space-y-2 my-3">{children}</ul>,
-                ol: ({ children }) => <ol className="list-decimal ml-4 space-y-2 my-3">{children}</ol>,
-                li: ({ children }) => (
-                  <li className="text-sm text-gray-700 leading-relaxed">
-                    {children}
-                    {lineAnnotations.map((ann, idx) => (
-                      <SourceBubble
-                        key={idx}
-                        sourceId={ann.source_id}
-                        url={ann.url}
-                        title={ann.title}
-                      />
-                    ))}
-                  </li>
-                ),
-              }}
-            >
-              {line}
-            </ReactMarkdown>
-          </div>
-        );
-      })}
+      <ReactMarkdown components={components}>
+        {markedText}
+      </ReactMarkdown>
     </div>
   );
 };
