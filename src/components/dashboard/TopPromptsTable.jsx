@@ -99,7 +99,7 @@ const TopPromptsTable = ({ data, title = "Top Prompts", company, analytics }) =>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedData.map((prompt, index) => {
+              {sortedData.slice(0, 6).map((prompt, index) => {
                 const mentionRate = getCompetitorMentionRate(prompt);
                 const latestRankings = prompt.analytics?.rankingsOverTime?.[prompt.analytics.rankingsOverTime.length - 1];
                 const rank = latestRankings?.[selectedDataKey] || 'N/A';
