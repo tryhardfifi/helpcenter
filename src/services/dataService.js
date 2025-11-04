@@ -653,63 +653,12 @@ export const getAllPromptRuns = async (companyId) => {
  */
 export const fetchAnalyticsForDashboard = async (companyId, companyName, competitorNames) => {
   if (useMockData) {
-    // In mock mode, compute analytics on-the-fly from existing runs
-    try {
-      const { computeDailyAnalytics, aggregateAnalyticsForDashboard } = await import('./analyticsComputation.js');
-
-      // Get all runs from mock data
-      const allRuns = Object.values(mockRuns).flat();
-
-      if (allRuns.length === 0) {
-        return null;
-      }
-
-      // Extract unique competitors from the runs themselves
-      const competitorsFromRuns = new Set();
-      allRuns.forEach(run => {
-        if (run.competitorMetrics) {
-          Object.keys(run.competitorMetrics).forEach(competitorName => {
-            competitorsFromRuns.add(competitorName);
-          });
-        }
-      });
-      const actualCompetitorNames = Array.from(competitorsFromRuns);
-
-      // Group runs by date to create daily analytics documents
-      const runsByDate = {};
-      allRuns.forEach(run => {
-        const date = new Date(run.createdAt).toISOString().split('T')[0];
-        if (!runsByDate[date]) {
-          runsByDate[date] = [];
-        }
-        runsByDate[date].push(run);
-      });
-
-      // Compute analytics for each date using actual competitors from runs
-      const competitors = actualCompetitorNames.map(name => ({ id: name.toLowerCase(), name }));
-      const analyticsDocuments = Object.keys(runsByDate).map(date => {
-        return computeDailyAnalytics({
-          companyId,
-          companyName,
-          competitors,
-          allPromptRuns: runsByDate[date],
-          date
-        });
-      });
-
-      // Aggregate the analytics (pass allRuns for source computation, use actual competitor names)
-      const aggregated = aggregateAnalyticsForDashboard(
-        analyticsDocuments,
-        companyName,
-        actualCompetitorNames,
-        allRuns
-      );
-
-      return aggregated;
-    } catch (error) {
-      console.error("Error computing mock analytics:", error);
-      return null;
+    // In mock mode, return the static mock analytics
+    const mockCompany = getMockCompany("acme-inc-123");
+    if (mockCompany && mockCompany.analytics) {
+      return mockCompany.analytics;
     }
+    return null;
   }
 
   if (!companyId) {

@@ -366,17 +366,30 @@ function computeTopSources(allPromptRuns, companyName) {
  *
  * @private
  * @param {string} url - Source URL
+ * @param {string} companyDomain - Company's own domain (optional)
  * @returns {string} Source type
  */
-function inferSourceType(url) {
+function inferSourceType(url, companyDomain = null) {
   const urlLower = url.toLowerCase();
 
-  if (urlLower.includes('reddit.com')) return 'reddit';
-  if (urlLower.includes('news') || urlLower.includes('techcrunch') || urlLower.includes('forbes')) return 'news';
-  if (urlLower.includes('blog') || urlLower.includes('medium')) return 'external';
+  // Check if it's an owned source (company's own domain)
+  if (companyDomain && urlLower.includes(companyDomain.toLowerCase())) {
+    return 'own';
+  }
 
-  // Default to external for third-party sites
-  return 'external';
+  // Social media platforms
+  if (urlLower.includes('reddit.com') || urlLower.includes('twitter.com') || urlLower.includes('x.com') || urlLower.includes('linkedin.com')) {
+    return 'reddit';
+  }
+
+  // News and publication sites
+  if (urlLower.includes('news') || urlLower.includes('techcrunch') || urlLower.includes('forbes') ||
+      urlLower.includes('producthunt') || urlLower.includes('ycombinator') || urlLower.includes('medium')) {
+    return 'publication';
+  }
+
+  // Default to publication for third-party sites
+  return 'publication';
 }
 
 /**
