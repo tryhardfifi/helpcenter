@@ -19,6 +19,16 @@ const Sources = () => {
   const { company, analytics, loading } = useCompanyData();
   const [selectedFilter, setSelectedFilter] = useState('all');
 
+  // Helper function to get favicon URL from domain
+  const getFaviconUrl = (url) => {
+    try {
+      const domain = new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+    } catch {
+      return null;
+    }
+  };
+
   // Filter sources based on type (use first competitor's data as default)
   const filteredSources = useMemo(() => {
     if (!analytics?.topSources) return [];
@@ -30,7 +40,8 @@ const Sources = () => {
 
     let sources = analytics.topSources.map(source => ({
       ...source,
-      mentionRate: source[firstCompKey] || 0
+      mentionRate: source[firstCompKey] || 0,
+      mentionCount: source.competitorMentionCounts?.[firstCompKey] || 0
     }));
 
     // Filter by type
@@ -316,24 +327,41 @@ const Sources = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-auto">Source URL</TableHead>
+                    <TableHead className="w-auto">Source</TableHead>
                     <TableHead className="text-center w-24">Type</TableHead>
-                    <TableHead className="text-right w-32">Mention Rate</TableHead>
+                    <TableHead className="text-right w-40">Mentioned</TableHead>
                     <TableHead className="text-center w-28">Trend</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredSources.map((source, index) => (
                     <TableRow key={index}>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium p-0">
                         <a
                           href={source.url.startsWith('http') ? source.url : `https://${source.url}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 hover:text-primary transition-colors"
+                          className="flex items-start gap-3 p-4 hover:bg-secondary/50 transition-colors"
                         >
-                          {source.url}
-                          <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+                          {getFaviconUrl(source.url) && (
+                            <img
+                              src={getFaviconUrl(source.url)}
+                              alt=""
+                              className="w-8 h-8 rounded flex-shrink-0 mt-0.5"
+                              onError={(e) => e.target.style.display = 'none'}
+                            />
+                          )}
+                          <div className="flex flex-col gap-1 min-w-0">
+                            {source.title && (
+                              <div className="font-semibold text-sm truncate">
+                                {source.title}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
+                              {source.url}
+                              <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                            </div>
+                          </div>
                         </a>
                       </TableCell>
                       <TableCell className="text-center w-24">
@@ -341,8 +369,13 @@ const Sources = () => {
                           {getTypeLabel(source.type)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right font-semibold w-32">
-                        {source.mentionRate}%
+                      <TableCell className="text-right w-40">
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span className="font-semibold text-base">{source.mentionRate}%</span>
+                          <span className="text-xs text-muted-foreground">
+                            {source.mentionCount} out of {source.totalAppearances} times
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="text-center w-28">
                         <Badge variant={getTrendVariant(source.trend)} className="gap-1">
