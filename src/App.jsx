@@ -7,7 +7,6 @@ import Home from './pages/Home';
 import Pricing from './pages/Pricing';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import Competitors from './pages/Competitors';
 import Prompts from './pages/Prompts';
 import PromptDetailPage from './pages/PromptDetailPage';
 import Settings from './pages/Settings';
@@ -32,7 +31,6 @@ function App() {
                 }
               >
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/competitors" element={<Competitors />} />
                 <Route path="/prompts" element={<Prompts />} />
                 <Route path="/prompts/:id" element={<PromptDetailPage />} />
                 <Route path="/sources" element={<Sources />} />
