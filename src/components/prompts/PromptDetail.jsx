@@ -14,7 +14,7 @@ import { useCompanyData } from '@/contexts/CompanyDataContext';
 
 const PromptDetail = ({ prompt, selectedRun, setSelectedRun }) => {
   const { companyId } = useCompanyId();
-  const { company } = useCompanyData();
+  const { company, analytics } = useCompanyData();
   const [runs, setRuns] = useState([]);
   const [runsLoading, setRunsLoading] = useState(true);
   const [runningPrompt, setRunningPrompt] = useState(false);
@@ -26,8 +26,11 @@ const PromptDetail = ({ prompt, selectedRun, setSelectedRun }) => {
   });
 
   useEffect(() => {
-    loadRuns();
-  }, [prompt.id]);
+    console.log('[PromptDetail] useEffect triggered - companyId:', companyId, 'promptId:', prompt.id);
+    if (companyId && prompt.id) {
+      loadRuns();
+    }
+  }, [prompt.id, companyId]);
 
   useEffect(() => {
     if (runs.length > 0 && company) {
@@ -36,9 +39,11 @@ const PromptDetail = ({ prompt, selectedRun, setSelectedRun }) => {
   }, [runs, company]);
 
   const loadRuns = async () => {
+    console.log('[PromptDetail] Loading runs for:', { companyId, promptId: prompt.id });
     setRunsLoading(true);
     try {
       const fetchedRuns = await getPromptRuns(companyId, prompt.id);
+      console.log('[PromptDetail] Fetched runs:', fetchedRuns.length, 'runs');
       setRuns(fetchedRuns);
     } catch (error) {
       console.error('Error loading runs:', error);
@@ -103,7 +108,9 @@ const PromptDetail = ({ prompt, selectedRun, setSelectedRun }) => {
       const dataPoint = {
         date: new Date(run.createdAt).toLocaleDateString('en-US', {
           month: 'short',
-          day: 'numeric'
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit'
         }),
         [companyName.toLowerCase().replace(/\s+/g, '')]: run.mentionPercentage || 0
       };
@@ -125,7 +132,9 @@ const PromptDetail = ({ prompt, selectedRun, setSelectedRun }) => {
       const dataPoint = {
         date: new Date(run.createdAt).toLocaleDateString('en-US', {
           month: 'short',
-          day: 'numeric'
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit'
         }),
         [companyName.toLowerCase().replace(/\s+/g, '')]: run.position || null
       };
@@ -155,9 +164,11 @@ const PromptDetail = ({ prompt, selectedRun, setSelectedRun }) => {
       const newRun = await executePromptRun(companyId, prompt.id, {
         text: prompt.text,
         companyName: company?.name || 'Your Company',
-        competitors: company?.competitors || []
+        competitors: analytics?.competitors || []  // ← Use competitors from analytics
       });
-      setRuns([newRun, ...runs]); // Add to beginning
+
+      // Reload all runs to get the updated list
+      await loadRuns();
     } catch (error) {
       console.error('Error running prompt:', error);
       alert('Failed to run prompt');

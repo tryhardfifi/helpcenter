@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, TrendingDown, Minus, ExternalLink } from 'lucide-react';
 
-const AttributionTable = ({ data = [], title = "Top Pages", company }) => {
+const AttributionTable = ({ data = [], title = "Top Pages", company, analytics }) => {
   const [selectedCompetitor, setSelectedCompetitor] = useState('own');
 
   const getTrendIcon = (trend) => {
@@ -39,13 +39,24 @@ const AttributionTable = ({ data = [], title = "Top Pages", company }) => {
     }
   };
 
+  // Extract competitors from analytics data (those that actually appear in runs)
+  const competitorsFromAnalytics = analytics?.visibilityScoreOverTime?.[0]
+    ? Object.keys(analytics.visibilityScoreOverTime[0])
+        .filter(key => key !== 'date')
+        .map(key => ({
+          name: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim(),
+          dataKey: key
+        }))
+    : [];
+
   // Create competitor list with own company first
-  const competitors = [
-    { id: 'own', name: company?.name || 'Your Business', dataKey: 'acme' },
-    ...(company?.competitors || []).map(comp => ({
-      id: comp.id,
+  const companyDataKey = competitorsFromAnalytics[0]?.dataKey || 'acme';
+  const competitorsList = [
+    { id: 'own', name: company?.name || 'Your Business', dataKey: companyDataKey },
+    ...competitorsFromAnalytics.slice(1).map((comp, idx) => ({
+      id: `comp-${idx}`,
       name: comp.name,
-      dataKey: comp.name.replace(/\s+/g, '').charAt(0).toLowerCase() + comp.name.replace(/\s+/g, '').slice(1)
+      dataKey: comp.dataKey
     }))
   ];
 
@@ -56,7 +67,12 @@ const AttributionTable = ({ data = [], title = "Top Pages", company }) => {
           <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-center py-8 text-muted-foreground">No data available</p>
+          <div className="flex items-center justify-center py-12 text-muted-foreground">
+            <div className="text-center">
+              <p className="text-lg font-medium mb-2">No analytics data yet</p>
+              <p className="text-sm">Run "Run All Prompts" to generate analytics</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
@@ -72,15 +88,17 @@ const AttributionTable = ({ data = [], title = "Top Pages", company }) => {
               <Link to="/sources">Show all</Link>
             </Button>
           </div>
-          <Tabs value={selectedCompetitor} onValueChange={setSelectedCompetitor}>
-            <TabsList>
-              {competitors.map((competitor) => (
-                <TabsTrigger key={competitor.id} value={competitor.id}>
-                  {competitor.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          {competitorsList.length > 1 && (
+            <Tabs value={selectedCompetitor} onValueChange={setSelectedCompetitor}>
+              <TabsList>
+                {competitorsList.map((competitor) => (
+                  <TabsTrigger key={competitor.id} value={competitor.id}>
+                    {competitor.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -94,29 +112,36 @@ const AttributionTable = ({ data = [], title = "Top Pages", company }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((page, index) => (
-              <TableRow key={index}>
-                <TableCell className="font-medium">
-                  <a
-                    href={page.url.startsWith('http') ? page.url : `https://${page.url}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 hover:text-primary transition-colors"
-                  >
-                    {page.url}
-                    <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
-                  </a>
-                </TableCell>
-                <TableCell className="text-right font-semibold w-32">{page.mentionRate}%</TableCell>
-                <TableCell className="text-right font-semibold w-32">{page.percentage}%</TableCell>
-                <TableCell className="text-center w-28">
-                  <Badge variant={getTrendVariant(page.trend)} className="gap-1">
-                    {getTrendIcon(page.trend)}
-                    {page.trend}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
+            {data.map((page, index) => {
+              // Check if we have actual data or if this is placeholder/empty
+              const hasData = page.mentionRate !== undefined && page.mentionRate !== null;
+              const mentionRateDisplay = hasData ? `${page.mentionRate}%` : '-';
+              const percentageDisplay = hasData && page.percentage !== undefined ? `${page.percentage}%` : '-';
+
+              return (
+                <TableRow key={index}>
+                  <TableCell className="font-medium">
+                    <a
+                      href={page.url.startsWith('http') ? page.url : `https://${page.url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 hover:text-primary transition-colors"
+                    >
+                      {page.url}
+                      <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+                    </a>
+                  </TableCell>
+                  <TableCell className="text-right font-semibold w-32">{mentionRateDisplay}</TableCell>
+                  <TableCell className="text-right font-semibold w-32">{percentageDisplay}</TableCell>
+                  <TableCell className="text-center w-28">
+                    <Badge variant={getTrendVariant(page.trend)} className="gap-1">
+                      {getTrendIcon(page.trend)}
+                      {page.trend}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </CardContent>

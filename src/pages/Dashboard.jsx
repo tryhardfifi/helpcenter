@@ -1,18 +1,106 @@
 import { useState } from 'react';
 import { useCompanyData } from '@/contexts/CompanyDataContext';
-import { getDataSource } from '@/services/dataService';
+import { getDataSource, executePromptRun, getAllPromptRuns, saveAnalytics } from '@/services/dataService';
+import { runAllPromptsAndComputeAnalytics } from '@/services/bulkPromptRunner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Database } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Database, Play } from 'lucide-react';
 import MetricCard from '@/components/dashboard/MetricCard';
 import KPIChart from '@/components/dashboard/KPIChart';
 import AttributionTable from '@/components/dashboard/AttributionTable';
 import TopPromptsTable from '@/components/dashboard/TopPromptsTable';
 
 const Dashboard = () => {
-  const { company, prompts, loading } = useCompanyData();
+  const { company, prompts, analytics, loading, refetch } = useCompanyData();
   const [activeKPI, setActiveKPI] = useState('visibilityScore');
+  const [runningAllPrompts, setRunningAllPrompts] = useState(false);
+  const [bulkRunProgress, setBulkRunProgress] = useState({ current: 0, total: 0 });
 
-  const analytics = company?.analytics;
+  const hasAnalytics = analytics && analytics.metrics;
+
+  const handleRunAllPrompts = async () => {
+    if (!company) {
+      alert('No company data found');
+      return;
+    }
+
+    if (!prompts || prompts.length === 0) {
+      alert('No prompts found. Please create some prompts first.');
+      return;
+    }
+
+    console.log('🚀 Starting Run All Prompts...');
+    console.log('Company:', company.name, 'Prompts:', prompts.length, 'Competitors:', analytics?.competitors?.length || 0);
+
+    setRunningAllPrompts(true);
+    setBulkRunProgress({ current: 0, total: prompts.length });
+
+    try {
+      // Progress callback
+      const onProgress = (message, current, total) => {
+        console.log(`📊 Progress: ${message} (${current}/${total})`);
+        setBulkRunProgress({ current, total });
+      };
+
+      // Execute prompt run function wrapper (uses existing executePromptRun)
+      const executePromptRunFn = async (promptId, promptData) => {
+        console.log(`▶️  Executing prompt ${promptId}...`);
+        const result = await executePromptRun(company.id, promptId, promptData);
+        console.log(`✅ Completed prompt ${promptId}`);
+        return result;
+      };
+
+      // Get all runs function wrapper
+      const getAllRunsFn = async () => {
+        console.log('📥 Fetching all runs...');
+        const runs = await getAllPromptRuns(company.id);
+        console.log(`📦 Found ${runs.length} total runs`);
+        return runs;
+      };
+
+      // Save analytics function wrapper
+      const saveAnalyticsFn = async (date, analyticsData) => {
+        console.log(`💾 Saving analytics for ${date}...`);
+        const result = await saveAnalytics(company.id, date, analyticsData);
+        console.log('✅ Analytics saved');
+        return result;
+      };
+
+      // Run all prompts and compute analytics
+      console.log('🎯 Calling bulk runner...');
+      const results = await runAllPromptsAndComputeAnalytics({
+        companyId: company.id,
+        companyName: company.name,
+        prompts: prompts,
+        competitors: analytics?.competitors || [], // Use competitors from analytics
+        executePromptRunFn,
+        getAllRunsFn,
+        saveAnalyticsFn,
+        onProgress
+      });
+
+      console.log('📊 Results:', results);
+      console.log(`✅ Success: ${results.successfulRuns}/${results.totalPrompts}`);
+      console.log(`❌ Failed: ${results.failedRuns}`);
+
+      if (results.errors.length > 0) {
+        console.error('Errors:', results.errors);
+      }
+
+      // Refresh company data to show updated data
+      console.log('🔄 Refreshing data...');
+      await refetch();
+      console.log('✅ Data refreshed');
+
+      alert(`Completed! ${results.successfulRuns} prompts run successfully, ${results.failedRuns} failed.`);
+    } catch (error) {
+      console.error('❌ Error running all prompts:', error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      setRunningAllPrompts(false);
+      setBulkRunProgress({ current: 0, total: 0 });
+    }
+  };
 
   if (loading) {
     return (
@@ -25,7 +113,7 @@ const Dashboard = () => {
     );
   }
 
-  if (!analytics) {
+  if (!company) {
     const isFirestoreMode = !getDataSource();
 
     return (
@@ -65,44 +153,70 @@ const Dashboard = () => {
 
   // Map KPI types to their corresponding data
   const kpiDataMap = {
-    visibilityScore: analytics.visibilityScoreOverTime,
-    mentionRate: analytics.mentionsOverTime,
-    avgProbability: analytics.avgProbabilityOverTime,
-    avgRank: analytics.rankingsOverTime,
+    visibilityScore: analytics?.visibilityScoreOverTime || [],
+    mentionRate: analytics?.mentionsOverTime || [],
+    avgProbability: analytics?.avgProbabilityOverTime || [],
+    avgRank: analytics?.rankingsOverTime || [],
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">
-          Overview of your AI mentions and rankings
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">
+            Overview of your AI mentions and rankings
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <Button
+            onClick={handleRunAllPrompts}
+            disabled={runningAllPrompts || !prompts || prompts.length === 0}
+            size="lg"
+          >
+            <Play className="h-4 w-4 mr-2" />
+            {runningAllPrompts ? 'Running...' : 'Run All Prompts'}
+          </Button>
+          {runningAllPrompts && bulkRunProgress.total > 0 && (
+            <div className="text-sm text-muted-foreground">
+              {bulkRunProgress.current}/{bulkRunProgress.total} prompts
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Metric Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Visibility Score"
-          value={analytics.metrics.visibilityScore}
-          suffix=""
+          value={hasAnalytics ? analytics.metrics.visibilityScore : '-'}
+          suffix={hasAnalytics ? '' : ''}
           trend="up"
           onClick={() => setActiveKPI('visibilityScore')}
           isActive={activeKPI === 'visibilityScore'}
-          info="The visibility score is calculated from the mention rate and average rank. It helps compare the overall AI visibility between you and your competitors."
+          info="The visibility score is calculated from the % of prompts you rank, the average probability for you to appear and the position of your business compared to your competitors. It helps compare the overall AI visibility between you and your competitors."
         />
         <MetricCard
           title="Mention Rate"
-          value={analytics.metrics.promptCoverage}
-          suffix="%"
+          value={hasAnalytics ? analytics.metrics.promptCoverage : '-'}
+          suffix={hasAnalytics ? '%' : ''}
           trend="up"
           onClick={() => setActiveKPI('mentionRate')}
           isActive={activeKPI === 'mentionRate'}
-          info="Percentage of your company being mentioned across all prompts and runs."
+          info="The share of prompts that your business can appear in."
+        />
+        <MetricCard
+          title="Probability to Appear"
+          value={hasAnalytics ? analytics.metrics.avgProbability : '-'}
+          suffix={hasAnalytics ? '%' : ''}
+          trend="up"
+          onClick={() => setActiveKPI('avgProbability')}
+          isActive={activeKPI === 'avgProbability'}
+          info="For the prompts that your business does appear in, how likely it is to show up. This is because AI never responds the exact same way, so you might sometimes appear and sometimes not. If this number is higher, it means your business is more of a leader in your niche."
         />
         <MetricCard
           title="Avg. Rank"
-          value={`#${analytics.metrics.avgRank}`}
+          value={hasAnalytics && analytics.metrics.avgRank ? `#${analytics.metrics.avgRank}` : '-'}
           trend="stable"
           onClick={() => setActiveKPI('avgRank')}
           isActive={activeKPI === 'avgRank'}
@@ -116,10 +230,10 @@ const Dashboard = () => {
       />
 
       {/* Top Prompts Table */}
-      <TopPromptsTable data={prompts} company={company} />
+      <TopPromptsTable data={prompts} company={company} analytics={analytics} />
 
       {/* Top Sources Table */}
-      <AttributionTable data={analytics.topSources} title="Top Sources" company={company} />
+      <AttributionTable data={analytics?.topSources || []} title="Top Sources" company={company} analytics={analytics} />
     </div>
   );
 };

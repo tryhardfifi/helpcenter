@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, doc, setDoc, writeBatch, getDoc } from "firebase/firestore";
 import { mockCompanyData, mockRuns } from "../src/data/mockData.js";
+import { computeDailyAnalytics, aggregateAnalyticsForDashboard } from "../src/services/analyticsComputation.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -48,24 +49,37 @@ async function seedFirestore(userEmails = ["fifacioni@gmail.com"], existingCompa
 
     console.log(`📦 Company ID: ${companyId}`);
 
-    // 1. Create or update company document
+    // 1. Create or update company document (NO analytics, NO competitors)
     console.log("📄 Creating/updating company document...");
     const companyRef = doc(db, "companies", companyId);
     const companyDoc = await getDoc(companyRef);
 
-    // Always update to ensure we have the latest mock data structure
+    // Only store basic company info - NO analytics, NO competitors
     await setDoc(companyRef, {
-      ...mockCompanyData.company,
       id: companyId,
-      createdAt: companyDoc.exists() ? companyDoc.data().createdAt : new Date().toISOString().split('T')[0],
+      name: mockCompanyData.company.name,
+      logo: mockCompanyData.company.logo,
+      website: mockCompanyData.company.website,
+      industry: mockCompanyData.company.industry,
+      subscription: mockCompanyData.company.subscription,
       members: userEmails,
-    }, { merge: false }); // Don't merge, replace completely to get new fields
+      createdAt: companyDoc.exists() ? companyDoc.data().createdAt : new Date().toISOString().split('T')[0],
+    }, { merge: false }); // Don't merge, replace completely
 
     if (companyDoc.exists()) {
-      console.log("✅ Company document updated with latest data");
+      console.log("✅ Company document updated (basic info only)");
     } else {
-      console.log("✅ Company document created");
+      console.log("✅ Company document created (basic info only)");
     }
+
+    // 1b. Create settings document with competitors configuration
+    console.log("⚙️  Creating settings document...");
+    const settingsRef = doc(db, "companies", companyId, "settings", "general");
+    await setDoc(settingsRef, {
+      competitors: mockCompanyData.company.competitors,
+      updatedAt: new Date().toISOString()
+    });
+    console.log("✅ Settings created with competitors configuration");
 
     // 2. Create user documents with companyId
     console.log("👤 Creating user documents...");
@@ -80,18 +94,28 @@ async function seedFirestore(userEmails = ["fifacioni@gmail.com"], existingCompa
       console.log(`✅ User ${email} linked to company`);
     }
 
-    // 3. Create prompts subcollection using batched writes
+    // 3. Create prompts subcollection using batched writes (without analytics data)
     console.log("📝 Creating prompts subcollection...");
     const promptsBatch = writeBatch(db);
     mockCompanyData.prompts.forEach((prompt) => {
       const promptRef = doc(collection(companyRef, "prompts"), prompt.id);
+      // Remove analytics data so prompts show "-" for mention rate and rank
+      const { analytics, ...promptWithoutAnalytics } = prompt;
       promptsBatch.set(promptRef, {
-        ...prompt,
+        ...promptWithoutAnalytics,
         companyId: companyId,
+        mentionRate: 0,
+        totalMentions: 0,
+        analytics: {
+          mentionsOverTime: [],
+          rankingsOverTime: [],
+          averagePosition: null,
+          coMentions: []
+        }
       });
     });
     await promptsBatch.commit();
-    console.log(`✅ Created ${mockCompanyData.prompts.length} prompts`);
+    console.log(`✅ Created ${mockCompanyData.prompts.length} prompts (no analytics data)`);
 
     // 4. Create articles subcollection using batched writes
     console.log("📰 Creating articles subcollection...");
@@ -106,41 +130,30 @@ async function seedFirestore(userEmails = ["fifacioni@gmail.com"], existingCompa
     await articlesBatch.commit();
     console.log(`✅ Created ${mockCompanyData.articles.length} articles`);
 
-    // 5. Create runs subcollections for each prompt using batched writes
-    console.log("🏃 Creating runs subcollections...");
-    let totalRuns = 0;
-    const runsBatch = writeBatch(db);
+    // 5. Skip creating runs - start with empty data for testing
+    console.log("🏃 Skipping runs creation (starting with 0 runs for testing)...");
+    const totalRuns = 0;
+    console.log(`✅ No runs created - ready to test "Run All Prompts" button`);
 
-    for (const prompt of mockCompanyData.prompts) {
-      const promptRuns = mockRuns[prompt.id] || [];
-
-      for (const run of promptRuns) {
-        const runRef = doc(collection(companyRef, "prompts", prompt.id, "runs"), run.id);
-        runsBatch.set(runRef, {
-          ...run,
-          createdAt: new Date(run.createdAt), // Convert ISO string to Date for Firestore
-        });
-        totalRuns++;
-      }
-    }
-
-    await runsBatch.commit();
-    console.log(`✅ Created ${totalRuns} runs across all prompts`);
+    // 6. DO NOT create analytics - it should only exist after running prompts
+    console.log("📊 Skipping analytics creation (will be created when you run prompts)...");
+    console.log(`✅ No analytics created - run "Run All Prompts" to generate analytics`);
 
     console.log("\n🎉 Firestore seeding completed successfully!");
     console.log(`\n📊 Summary:`);
     console.log(`   - Company ID: ${companyId}`);
     console.log(`   - Users: ${userEmails.join(', ')}`);
     console.log(`   - Company Name: ${mockCompanyData.company.name}`);
-    console.log(`   - Prompts: ${mockCompanyData.prompts.length}`);
-    console.log(`   - Runs: ${totalRuns}`);
+    console.log(`   - Prompts: ${mockCompanyData.prompts.length} (ready to run)`);
+    console.log(`   - Runs: ${totalRuns} (empty - test the Run All Prompts button!)`);
     console.log(`   - Articles: ${mockCompanyData.articles.length}`);
     console.log(`   - Competitors: ${mockCompanyData.company.competitors.length}`);
+    console.log(`   - Analytics: None (will be created after running prompts)`);
 
     console.log(`\n💡 Next steps:`);
     console.log(`   1. Log in with: ${userEmails[0]}`);
     console.log(`   2. Switch to "Firestore" mode in the sidebar`);
-    console.log(`   3. Refresh to see your data!`);
+    console.log(`   3. Go to Dashboard and click "Run All Prompts" to test!`);
 
     process.exit(0);
   } catch (error) {
