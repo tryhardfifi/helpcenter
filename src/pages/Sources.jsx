@@ -36,7 +36,11 @@ const Sources = () => {
     }
 
     if (selectedFilter === 'publications') {
-      return sources.filter(source => source.type === 'news' || source.type === 'external');
+      return sources.filter(source =>
+        source.type === 'publication' ||
+        source.type === 'external' ||
+        source.type === 'news'
+      );
     }
 
     return sources;
@@ -83,7 +87,7 @@ const Sources = () => {
         typeCounts.owned++;
       } else if (source.type === 'reddit') {
         typeCounts.social++;
-      } else if (source.type === 'news' || source.type === 'external') {
+      } else if (source.type === 'publication' || source.type === 'external' || source.type === 'news') {
         typeCounts.publications++;
       }
     });
@@ -125,10 +129,10 @@ const Sources = () => {
         return 'Owned';
       case 'reddit':
         return 'Social';
-      case 'news':
-        return 'News';
+      case 'publication':
       case 'external':
-        return 'External';
+      case 'news':
+        return 'Publication';
       default:
         return type;
     }
@@ -140,9 +144,9 @@ const Sources = () => {
         return 'default';
       case 'reddit':
         return 'secondary';
-      case 'news':
-        return 'outline';
+      case 'publication':
       case 'external':
+      case 'news':
         return 'outline';
       default:
         return 'outline';
@@ -298,7 +302,6 @@ const Sources = () => {
                     <TableHead className="w-auto">Source URL</TableHead>
                     <TableHead className="text-center w-24">Type</TableHead>
                     <TableHead className="text-right w-32">Mention Rate</TableHead>
-                    <TableHead className="text-right w-32">Share of Total</TableHead>
                     <TableHead className="text-center w-28">Trend</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -323,9 +326,6 @@ const Sources = () => {
                       </TableCell>
                       <TableCell className="text-right font-semibold w-32">
                         {source.mentionRate}%
-                      </TableCell>
-                      <TableCell className="text-right font-semibold w-32">
-                        {source.percentage}%
                       </TableCell>
                       <TableCell className="text-center w-28">
                         <Badge variant={getTrendVariant(source.trend)} className="gap-1">
