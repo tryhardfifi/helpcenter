@@ -102,7 +102,7 @@ const Prompts = () => {
         <div>
           <h1 className="text-3xl font-bold">Prompts</h1>
           <p className="text-muted-foreground mt-1">
-            Track AI mentions across different prompts
+            Track how your business is mentioned across prompts
           </p>
         </div>
 
@@ -148,7 +148,7 @@ const Prompts = () => {
         <div>
           <h1 className="text-3xl font-bold">Prompts</h1>
           <p className="text-muted-foreground mt-1">
-            Track AI mentions across different prompts
+          Track how your business is mentioned across prompts
           </p>
         </div>
         <Button onClick={() => setIsDialogOpen(true)}>

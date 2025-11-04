@@ -125,7 +125,7 @@ const Sources = () => {
     return [
       { name: 'Owned', value: typeCounts.owned, percentage: total > 0 ? ((typeCounts.owned / total) * 100).toFixed(1) : 0, fill: '#171717' },
       { name: 'Social', value: typeCounts.social, percentage: total > 0 ? ((typeCounts.social / total) * 100).toFixed(1) : 0, fill: '#525252' },
-      { name: 'Publications', value: typeCounts.publications, percentage: total > 0 ? ((typeCounts.publications / total) * 100).toFixed(1) : 0, fill: '#a3a3a3' }
+      { name: 'External', value: typeCounts.publications, percentage: total > 0 ? ((typeCounts.publications / total) * 100).toFixed(1) : 0, fill: '#a3a3a3' }
     ].filter(item => item.value > 0);
   }, [analytics]);
 
@@ -160,7 +160,7 @@ const Sources = () => {
       case 'publication':
       case 'external':
       case 'news':
-        return 'Publication';
+        return 'External';
       default:
         return type;
     }
@@ -186,7 +186,7 @@ const Sources = () => {
     { id: 'all', label: 'All' },
     { id: 'owned', label: 'Owned' },
     { id: 'social', label: 'Social' },
-    { id: 'publications', label: 'Publications' },
+    { id: 'publications', label: 'External' },
   ];
 
   if (loading) {
