@@ -84,19 +84,8 @@ export const updateCompany = async (companyId, updates) => {
 // Prompts operations
 export const getCompanyPrompts = async (companyId) => {
   if (useMockData) {
-    const prompts = getMockCompanyPrompts("acme-inc-123");
-    // Remove pre-populated analytics to simulate a fresh state
-    return prompts.map(prompt => ({
-      ...prompt,
-      mentionRate: 0,
-      totalMentions: 0,
-      analytics: {
-        mentionsOverTime: [],
-        rankingsOverTime: [],
-        averagePosition: 0,
-        coMentions: [],
-      },
-    }));
+    // Return prompts as-is from mock data
+    return getMockCompanyPrompts("acme-inc-123");
   }
 
   if (!companyId) {
