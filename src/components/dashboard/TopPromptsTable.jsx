@@ -154,15 +154,15 @@ const TopPromptsTable = ({ data, title = "Top Prompts", company, analytics }) =>
                   </TableRow>
                 );
               })}
-              <TableRow className="hover:bg-secondary/50">
-                <TableCell colSpan={4} className="text-center">
-                  <Link
-                    to="/prompts"
-                    className="inline-flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
-                  >
+              <TableRow
+                className="cursor-pointer hover:bg-secondary/50"
+                onClick={() => window.location.href = '/prompts'}
+              >
+                <TableCell colSpan={4} className="text-center py-4">
+                  <div className="inline-flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors">
                     Show all
                     <ArrowRight className="h-4 w-4" />
-                  </Link>
+                  </div>
                 </TableCell>
               </TableRow>
             </TableBody>
