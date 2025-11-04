@@ -181,7 +181,14 @@ const Prompts = () => {
                       to={`/prompts/${prompt.id}`}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {prompt.text}
+                      <div className="inline-flex items-end">
+                        <svg width="16" height="14" viewBox="0 0 45 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0 absolute ml-[-3px] mb-[-5px]">
+                          <path d="M0 31C14 24 19.1667 10.6667 19 2.5V0H44.5V1.5C37.7 23.1 17.5 31.5 0 31Z" fill="#E9E9EB"/>
+                        </svg>
+                        <div className="bg-[#E9E9EB] text-gray-800 px-3 py-2 rounded-2xl">
+                          {prompt.text}
+                        </div>
+                      </div>
                     </Link>
                   </TableCell>
                   <TableCell className="text-right font-semibold">{prompt.mentionRate}%</TableCell>
