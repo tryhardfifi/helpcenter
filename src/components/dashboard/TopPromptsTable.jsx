@@ -106,8 +106,8 @@ const TopPromptsTable = ({ data, title = "Top Prompts", company, analytics }) =>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-auto">Prompt</TableHead>
-                <TableHead className="text-right w-32">Mention Rate</TableHead>
-                <TableHead className="text-right w-32">Avg. Rank</TableHead>
+                <TableHead className="text-right w-32">Mentioned</TableHead>
+                <TableHead className="text-right w-32">Avg. Position</TableHead>
                 <TableHead className="text-center w-28">Trend</TableHead>
               </TableRow>
             </TableHeader>
@@ -138,7 +138,12 @@ const TopPromptsTable = ({ data, title = "Top Prompts", company, analytics }) =>
                         </div>
                       </Link>
                     </TableCell>
-                    <TableCell className="text-right font-semibold w-32">{mentionRate}%</TableCell>
+                    <TableCell className="text-right font-semibold w-32">
+                      <div>{mentionRate}%</div>
+                      <div className="text-xs text-muted-foreground font-normal">
+                        {Math.round(mentionRate / 10)} out of 10 times
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right font-semibold w-32">{rank}</TableCell>
                     <TableCell className="text-center w-28">
                       <Badge variant={getTrendVariant(prompt.trend)} className="gap-1">

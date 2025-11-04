@@ -236,7 +236,7 @@ const Dashboard = () => {
           title="Mentioned"
           value={hasAnalytics ? analytics.metrics.promptCoverage : '-'}
           suffix={hasAnalytics ? '%' : ''}
-          subtitle={mentionDetails.total > 0 ? `${mentionDetails.mentioned} out of ${mentionDetails.total} times` : ''}
+          subtitle={mentionDetails.total > 0 ? `${mentionDetails.mentioned} out of ${mentionDetails.total} times you're mentioned` : ''}
           icon={CheckCircle}
           trend="up"
           onClick={() => setActiveKPI('mentioned')}

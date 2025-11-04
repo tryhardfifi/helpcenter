@@ -163,8 +163,8 @@ const Prompts = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Prompt</TableHead>
-                <TableHead className="text-right">Mention Rate</TableHead>
-                <TableHead className="text-right">Avg. Rank</TableHead>
+                <TableHead className="text-right">Mentioned</TableHead>
+                <TableHead className="text-right">Avg. Position</TableHead>
                 <TableHead className="text-right">Last Updated</TableHead>
                 <TableHead className="w-[100px]"></TableHead>
               </TableRow>
@@ -191,7 +191,12 @@ const Prompts = () => {
                       </div>
                     </Link>
                   </TableCell>
-                  <TableCell className="text-right font-semibold">{prompt.mentionRate}%</TableCell>
+                  <TableCell className="text-right font-semibold">
+                    <div>{prompt.mentionRate}%</div>
+                    <div className="text-xs text-muted-foreground font-normal">
+                      {Math.round(prompt.mentionRate / 10)} out of 10 times
+                    </div>
+                  </TableCell>
                   <TableCell className="text-right font-semibold">{prompt.analytics.averagePosition}</TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">
                     {formatRelativeTime(prompt.lastUpdated)}

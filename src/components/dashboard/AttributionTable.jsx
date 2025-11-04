@@ -122,7 +122,7 @@ const AttributionTable = ({ data = [], title = "Top Pages", company, analytics }
             <TableHeader>
               <TableRow>
                 <TableHead className="w-auto">Source</TableHead>
-                <TableHead className="text-right w-40">Mentioned</TableHead>
+                <TableHead className="text-right w-40">Cited</TableHead>
                 <TableHead className="text-center w-28">Trend</TableHead>
               </TableRow>
             </TableHeader>
