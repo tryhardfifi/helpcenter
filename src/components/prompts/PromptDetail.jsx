@@ -147,6 +147,33 @@ const PromptDetail = ({ prompt, selectedRun, setSelectedRun }) => {
     return new Date(`${month} ${day.replace(',', '')}, ${year}`);
   }, [currentRunGroup]);
 
+  // Keyboard navigation with arrow keys
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // Only handle arrow keys if not typing in an input/textarea
+      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        if (hasPrevious) {
+          handlePrevious();
+        }
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        if (hasNext) {
+          handleNext();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [hasPrevious, hasNext, currentIndividualRunIndex]);
+
   // Get display label for run group
   const getRunGroupLabel = (date) => {
     const today = new Date().toLocaleDateString('en-US', {
@@ -412,6 +439,7 @@ const PromptDetail = ({ prompt, selectedRun, setSelectedRun }) => {
                         text={currentIndividualRun.conversation}
                         annotations={currentIndividualRun.annotations}
                         sources={currentIndividualRun.sources}
+                        companyName={company?.name}
                       />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">AI Assistant</p>

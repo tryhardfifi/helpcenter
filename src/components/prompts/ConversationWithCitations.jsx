@@ -6,10 +6,53 @@ import SourceBubble from './SourceBubble';
  * ConversationWithCitations - Renders conversation text with inline citation bubbles
  * Takes markdown text and annotations, and inserts source bubbles at the appropriate positions
  */
-const ConversationWithCitations = ({ text, annotations = [], sources = [] }) => {
+const ConversationWithCitations = ({ text, annotations = [], sources = [], companyName = null }) => {
   if (!text) {
     return <p className="text-sm text-muted-foreground">No conversation data available</p>;
   }
+
+  // Function to highlight company mentions in text
+  const highlightCompanyMentions = (str) => {
+    if (!companyName || typeof str !== 'string') return str;
+
+    // Create a case-insensitive regex to find company name
+    const regex = new RegExp(`(${companyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = str.split(regex);
+
+    return parts.map((part, index) => {
+      // Check if this part matches the company name (case-insensitive)
+      if (part.toLowerCase() === companyName.toLowerCase()) {
+        return (
+          <mark
+            key={index}
+            className="bg-yellow-200/80 text-gray-900 px-1.5 py-0.5 rounded-sm font-medium relative inline-flex items-center transition-all duration-200 hover:bg-yellow-300/90"
+            style={{
+              boxShadow: '0 0 0 2px rgba(250, 204, 21, 0.2)',
+            }}
+          >
+            {part}
+          </mark>
+        );
+      }
+      return part;
+    });
+  };
+
+  // Helper to process children with company highlighting
+  const processChildrenWithHighlight = (children) => {
+    if (typeof children === 'string') {
+      return highlightCompanyMentions(children);
+    }
+    if (Array.isArray(children)) {
+      return children.map((child, idx) => {
+        if (typeof child === 'string') {
+          return <React.Fragment key={idx}>{highlightCompanyMentions(child)}</React.Fragment>;
+        }
+        return child;
+      });
+    }
+    return children;
+  };
 
   // If no annotations, just render the markdown normally
   if (!annotations || annotations.length === 0) {
@@ -17,11 +60,11 @@ const ConversationWithCitations = ({ text, annotations = [], sources = [] }) => 
       <div className="prose prose-sm max-w-none">
         <ReactMarkdown
           components={{
-            p: ({ children }) => <p className="text-sm text-gray-700 leading-relaxed mb-3 last:mb-0">{children}</p>,
-            strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
+            p: ({ children }) => <p className="text-sm text-gray-700 leading-relaxed mb-3 last:mb-0">{processChildrenWithHighlight(children)}</p>,
+            strong: ({ children }) => <strong className="font-semibold text-gray-900">{processChildrenWithHighlight(children)}</strong>,
             ul: ({ children }) => <ul className="list-disc ml-6 space-y-1 my-3">{children}</ul>,
             ol: ({ children }) => <ol className="list-decimal ml-6 space-y-1 my-3">{children}</ol>,
-            li: ({ children }) => <li className="text-sm text-gray-700 leading-relaxed">{children}</li>,
+            li: ({ children }) => <li className="text-sm text-gray-700 leading-relaxed">{processChildrenWithHighlight(children)}</li>,
           }}
         >
           {text}
@@ -82,7 +125,7 @@ const ConversationWithCitations = ({ text, annotations = [], sources = [] }) => 
     return children;
   }
 
-  // Replace marker strings with SourceBubble components
+  // Replace marker strings with SourceBubble components and apply company highlighting
   function replaceMarkersWithBubbles(str) {
     const parts = [];
     let remainingStr = str;
@@ -91,9 +134,15 @@ const ConversationWithCitations = ({ text, annotations = [], sources = [] }) => 
     markers.forEach(({ id, annotations: anns }) => {
       const index = remainingStr.indexOf(id);
       if (index !== -1) {
-        // Add text before marker
+        // Add text before marker with company highlighting
         if (index > 0) {
-          parts.push(remainingStr.slice(0, index));
+          const textPart = remainingStr.slice(0, index);
+          const highlighted = highlightCompanyMentions(textPart);
+          if (Array.isArray(highlighted)) {
+            parts.push(...highlighted);
+          } else {
+            parts.push(highlighted);
+          }
         }
         // Add SourceBubbles for this position
         anns.forEach((ann, idx) => {
@@ -111,9 +160,14 @@ const ConversationWithCitations = ({ text, annotations = [], sources = [] }) => 
       }
     });
 
-    // Add any remaining text
+    // Add any remaining text with company highlighting
     if (remainingStr) {
-      parts.push(remainingStr);
+      const highlighted = highlightCompanyMentions(remainingStr);
+      if (Array.isArray(highlighted)) {
+        parts.push(...highlighted);
+      } else {
+        parts.push(highlighted);
+      }
     }
 
     return parts.length > 0 ? parts : str;
