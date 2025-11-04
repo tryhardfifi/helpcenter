@@ -47,6 +47,8 @@ export const mockCompanyData = {
         promptCoverage: 72.4, // % of tracked prompts where company appears
         avgProbability: 68.3, // average % chance of appearing in results
         avgRank: 2.1, // average position when mentioned
+        totalMentions: 145, // total number of times mentioned
+        totalRuns: 200, // total number of runs
       },
       visibilityScoreOverTime: [
         { date: "Jan", acme: 65.3, competitorCo: 85.2, rivalTech: 48.5, industryCorp: 38.7 },

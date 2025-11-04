@@ -530,12 +530,16 @@ export function aggregateAnalyticsForDashboard(analyticsDocuments, companyName, 
     visibilityScore: latestDoc.metrics.company.visibilityScore,
     promptCoverage: latestDoc.metrics.company.mentionRate,
     avgProbability: latestDoc.metrics.company.avgProbability,
-    avgRank: latestDoc.metrics.company.avgRank || 0
+    avgRank: latestDoc.metrics.company.avgRank || 0,
+    totalMentions: latestDoc.metrics.company.totalMentions || 0,
+    totalRuns: latestDoc.metrics.company.totalRuns || 0
   } : {
     visibilityScore: 0,
     promptCoverage: 0,
     avgProbability: 0,
-    avgRank: 0
+    avgRank: 0,
+    totalMentions: 0,
+    totalRuns: 0
   };
 
   // Compute top sources if runs are provided
