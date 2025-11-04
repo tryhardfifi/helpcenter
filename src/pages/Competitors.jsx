@@ -109,7 +109,7 @@ const Competitors = () => {
       {/* Competitors Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Competitor Performance</CardTitle>
+          <CardTitle>Overview</CardTitle>
         </CardHeader>
         <CardContent>
           {competitorData.length === 0 ? (
