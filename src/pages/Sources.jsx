@@ -16,14 +16,14 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { getDomainColor } from '@/lib/colors';
 
 const Sources = () => {
-  const { company, loading } = useCompanyData();
+  const { company, analytics, loading } = useCompanyData();
   const [selectedFilter, setSelectedFilter] = useState('all');
 
   // Filter sources based on type
   const filteredSources = useMemo(() => {
-    if (!company?.analytics?.topSources) return [];
+    if (!analytics?.topSources) return [];
 
-    const sources = company.analytics.topSources;
+    const sources = analytics.topSources;
 
     if (selectedFilter === 'all') return sources;
 
@@ -44,17 +44,24 @@ const Sources = () => {
     }
 
     return sources;
-  }, [company, selectedFilter]);
+  }, [analytics, selectedFilter]);
 
   // Process data for domain chart - group by domain
   const domainChartData = useMemo(() => {
-    if (!company?.analytics?.topSources) return [];
+    if (!analytics?.topSources) return [];
 
     const domainMap = new Map();
 
-    company.analytics.topSources.forEach(source => {
+    analytics.topSources.forEach(source => {
       // Extract domain from URL
-      const domain = source.url.split('/')[0];
+      let domain;
+      try {
+        const url = new URL(source.url.startsWith('http') ? source.url : `https://${source.url}`);
+        domain = url.hostname;
+      } catch {
+        // Fallback if URL parsing fails
+        domain = source.url.split('/')[0];
+      }
 
       if (domainMap.has(domain)) {
         domainMap.set(domain, domainMap.get(domain) + source.mentionRate);
@@ -70,11 +77,11 @@ const Sources = () => {
     }))
     .sort((a, b) => b.mentions - a.mentions)
     .slice(0, 8); // Top 8 domains
-  }, [company]);
+  }, [analytics]);
 
   // Process data for source type pie chart
   const sourceTypeData = useMemo(() => {
-    if (!company?.analytics?.topSources) return [];
+    if (!analytics?.topSources) return [];
 
     const typeCounts = {
       owned: 0,
@@ -82,7 +89,7 @@ const Sources = () => {
       publications: 0
     };
 
-    company.analytics.topSources.forEach(source => {
+    analytics.topSources.forEach(source => {
       if (source.type === 'own') {
         typeCounts.owned++;
       } else if (source.type === 'reddit') {
@@ -99,7 +106,7 @@ const Sources = () => {
       { name: 'Social', value: typeCounts.social, percentage: total > 0 ? ((typeCounts.social / total) * 100).toFixed(1) : 0, fill: '#525252' },
       { name: 'Publications', value: typeCounts.publications, percentage: total > 0 ? ((typeCounts.publications / total) * 100).toFixed(1) : 0, fill: '#a3a3a3' }
     ].filter(item => item.value > 0);
-  }, [company]);
+  }, [analytics]);
 
   const getTrendIcon = (trend) => {
     switch (trend) {

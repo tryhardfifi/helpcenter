@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useCompanyId } from "@/hooks/useCompanyId";
-import { getCompany, getCompanyPrompts, getCompanyArticles } from "@/services/dataService";
+import { getCompany, getCompanyPrompts, getCompanyArticles, fetchAnalyticsForDashboard } from "@/services/dataService";
 
 const CompanyDataContext = createContext();
 
@@ -17,6 +17,7 @@ export const CompanyDataProvider = ({ children }) => {
   const [company, setCompany] = useState(null);
   const [prompts, setPrompts] = useState([]);
   const [articles, setArticles] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -37,6 +38,16 @@ export const CompanyDataProvider = ({ children }) => {
       setCompany(companyData);
       setPrompts(promptsData);
       setArticles(articlesData);
+
+      // Fetch analytics from subcollection (competitors come from analytics now)
+      if (companyData) {
+        const analyticsData = await fetchAnalyticsForDashboard(
+          companyId,
+          companyData.name,
+          [] // Pass empty array, competitors will be extracted from runs
+        );
+        setAnalytics(analyticsData);
+      }
     } catch (err) {
       console.error("Error fetching company data:", err);
       setError(err);
@@ -60,6 +71,7 @@ export const CompanyDataProvider = ({ children }) => {
         company,
         prompts,
         articles,
+        analytics,
         loading,
         error,
         refetch,

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useCompanyData } from '@/contexts/CompanyDataContext';
-import { updateCompany } from '@/services/dataService';
+import { updateCompany, getAllPromptRuns, saveAnalytics } from '@/services/dataService';
+import { computeDailyAnalytics } from '@/services/analyticsComputation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Building2, CreditCard, Users, Save, Plus, Trash2, Crown, Edit2, X } from 'lucide-react';
+import { Building2, CreditCard, Users, Save, Plus, Trash2, Edit2, X, BarChart3 } from 'lucide-react';
 
 const Settings = () => {
   const { company, loading, refetch } = useCompanyData();
@@ -16,6 +17,8 @@ const Settings = () => {
   const [website, setWebsite] = useState('');
   const [industry, setIndustry] = useState('');
   const [saving, setSaving] = useState(false);
+  const [computingAnalytics, setComputingAnalytics] = useState(false);
+  const [analyticsMessage, setAnalyticsMessage] = useState('');
 
   // Preload company data when it's available
   useEffect(() => {
@@ -53,11 +56,6 @@ const Settings = () => {
     setIsEditingCompany(false);
   };
 
-  const handleChangePlan = (newPlan) => {
-    // TODO: Implement plan change
-    alert(`Changing to ${newPlan} plan...`);
-  };
-
   const handleInviteMember = () => {
     // TODO: Implement invite member
     alert('Invite member functionality coming soon!');
@@ -66,6 +64,53 @@ const Settings = () => {
   const handleRemoveMember = async (memberId) => {
     // TODO: Implement remove member in Firestore
     alert('Remove member functionality coming soon!');
+  };
+
+  const handleComputeAnalytics = async () => {
+    if (!company) {
+      setAnalyticsMessage('No company data available');
+      return;
+    }
+
+    setComputingAnalytics(true);
+    setAnalyticsMessage('Computing analytics...');
+
+    try {
+      // Get today's date
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0];
+
+      // Get all runs from all prompts
+      const allRuns = await getAllPromptRuns(company.id);
+
+      if (allRuns.length === 0) {
+        setAnalyticsMessage('No prompt runs found. Please run some prompts first.');
+        setComputingAnalytics(false);
+        return;
+      }
+
+      // Compute analytics
+      const dailyAnalytics = computeDailyAnalytics({
+        companyId: company.id,
+        companyName: company.name,
+        competitors: company.competitors || [],
+        allPromptRuns: allRuns,
+        date: dateStr
+      });
+
+      // Save analytics
+      await saveAnalytics(company.id, dateStr, dailyAnalytics);
+
+      setAnalyticsMessage(`✅ Analytics computed successfully for ${dateStr}! Total runs analyzed: ${allRuns.length}`);
+
+      // Refresh company data to show updated analytics
+      await refetch();
+    } catch (error) {
+      console.error('Error computing analytics:', error);
+      setAnalyticsMessage(`❌ Error: ${error.message}`);
+    } finally {
+      setComputingAnalytics(false);
+    }
   };
 
   if (loading) {
@@ -80,26 +125,6 @@ const Settings = () => {
   }
 
   const subscription = company?.subscription;
-  const plans = [
-    {
-      name: 'Starter',
-      id: 'starter',
-      price: 99,
-      features: ['Up to 3 answer engines', '50 prompts tracked', '3 articles/month'],
-    },
-    {
-      name: 'Growth',
-      id: 'growth',
-      price: 399,
-      features: ['Up to 5 answer engines', '100 prompts tracked', '6 articles/month', 'Advanced Analytics'],
-    },
-    {
-      name: 'Enterprise',
-      id: 'enterprise',
-      price: 999,
-      features: ['Unlimited answer engines', 'Unlimited prompts', 'Unlimited articles', 'API Access', 'Priority Support'],
-    },
-  ];
 
   return (
     <div className="space-y-6">
@@ -226,56 +251,47 @@ const Settings = () => {
               Next billing date: {subscription?.nextBillingDate}
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          <Separator />
-
-          {/* Available Plans */}
-          <div>
-            <h3 className="font-semibold mb-4">Available Plans</h3>
-            <div className="grid gap-4 md:grid-cols-3">
-              {plans.map((plan) => (
-                <Card
-                  key={plan.id}
-                  className={
-                    subscription?.plan === plan.id
-                      ? 'border-primary border-2'
-                      : ''
-                  }
-                >
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>{plan.name}</span>
-                      {subscription?.plan === plan.id && (
-                        <Crown className="h-4 w-4 text-primary" />
-                      )}
-                    </CardTitle>
-                    <div className="text-2xl font-bold">
-                      ${plan.price}
-                      <span className="text-sm font-normal text-muted-foreground">/mo</span>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <ul className="space-y-2 text-sm">
-                      {plan.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <span className="text-primary mt-0.5">✓</span>
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Button
-                      variant={subscription?.plan === plan.id ? 'secondary' : 'default'}
-                      className="w-full"
-                      disabled={subscription?.plan === plan.id}
-                      onClick={() => handleChangePlan(plan.id)}
-                    >
-                      {subscription?.plan === plan.id ? 'Current Plan' : 'Upgrade'}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+      {/* Analytics */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Analytics Computation
+          </CardTitle>
+          <CardDescription>
+            Compute daily analytics from all prompt runs
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-4 bg-secondary/50 rounded-lg">
+            <p className="text-sm text-muted-foreground mb-4">
+              Click the button below to compute analytics for today based on all your prompt runs.
+              This will calculate average visibility, mention rate, probability, and rank for your company and competitors.
+            </p>
+            <Button
+              onClick={handleComputeAnalytics}
+              disabled={computingAnalytics}
+              variant="default"
+            >
+              <BarChart3 className="h-4 w-4 mr-2" />
+              {computingAnalytics ? 'Computing...' : 'Compute Analytics'}
+            </Button>
           </div>
+
+          {analyticsMessage && (
+            <div className={`p-3 rounded-lg text-sm ${
+              analyticsMessage.startsWith('✅')
+                ? 'bg-green-50 text-green-900 border border-green-200'
+                : analyticsMessage.startsWith('❌')
+                ? 'bg-red-50 text-red-900 border border-red-200'
+                : 'bg-blue-50 text-blue-900 border border-blue-200'
+            }`}>
+              {analyticsMessage}
+            </div>
+          )}
         </CardContent>
       </Card>
 

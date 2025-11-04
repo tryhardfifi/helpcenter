@@ -14,49 +14,39 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { getBarColor } from '@/lib/colors';
 
 const Competitors = () => {
-  const { company, loading } = useCompanyData();
+  const { company, analytics, loading } = useCompanyData();
 
   // Process competitor data from analytics
   const competitorData = useMemo(() => {
-    if (!company?.analytics) return [];
+    if (!analytics) return [];
 
     // Get the latest data points (June/last month)
-    const latestVisibility = company.analytics.visibilityScoreOverTime?.[company.analytics.visibilityScoreOverTime.length - 1];
-    const latestMentions = company.analytics.mentionsOverTime?.[company.analytics.mentionsOverTime.length - 1];
-    const latestRankings = company.analytics.rankingsOverTime?.[company.analytics.rankingsOverTime.length - 1];
+    const latestVisibility = analytics.visibilityScoreOverTime?.[analytics.visibilityScoreOverTime.length - 1];
+    const latestMentions = analytics.mentionsOverTime?.[analytics.mentionsOverTime.length - 1];
+    const latestRankings = analytics.rankingsOverTime?.[analytics.rankingsOverTime.length - 1];
 
     if (!latestVisibility || !latestMentions || !latestRankings) return [];
 
-    // Create array of competitors with your company first
-    const competitors = [
-      {
-        id: 'own',
-        name: company.name || 'Your Company',
-        visibilityScore: latestVisibility.acme,
-        mentionRate: latestMentions.acme,
-        averageRank: latestRankings.acme,
-        isOwn: true
-      }
-    ];
+    // Extract all competitor names from the analytics data
+    const dataKeys = Object.keys(latestVisibility).filter(key => key !== 'date');
 
-    // Add competitor companies
-    if (company.competitors) {
-      company.competitors.forEach(comp => {
-        const dataKey = comp.name.replace(/\s+/g, '').charAt(0).toLowerCase() + comp.name.replace(/\s+/g, '').slice(1);
+    // Create array of competitors with your company first (first key is assumed to be our company)
+    const competitors = dataKeys.map((dataKey, index) => {
+      const isOwn = index === 0; // First competitor is our company
+      const displayName = dataKey.charAt(0).toUpperCase() + dataKey.slice(1).replace(/([A-Z])/g, ' $1').trim();
 
-        competitors.push({
-          id: comp.id,
-          name: comp.name,
-          visibilityScore: latestVisibility[dataKey] || 0,
-          mentionRate: latestMentions[dataKey] || 0,
-          averageRank: latestRankings[dataKey] || 0,
-          isOwn: false
-        });
-      });
-    }
+      return {
+        id: isOwn ? 'own' : `comp-${index}`,
+        name: isOwn ? (company.name || displayName) : displayName,
+        visibilityScore: latestVisibility[dataKey] || 0,
+        mentionRate: latestMentions[dataKey] || 0,
+        averageRank: latestRankings[dataKey] || 0,
+        isOwn
+      };
+    });
 
     return competitors;
-  }, [company]);
+  }, [company, analytics]);
 
   // Prepare data for mention rate chart (top 5)
   const mentionRateChartData = useMemo(() => {

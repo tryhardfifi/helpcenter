@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, TrendingDown, Minus, ArrowRight } from 'lucide-react';
 
-const TopPromptsTable = ({ data, title = "Top Prompts", company }) => {
+const TopPromptsTable = ({ data, title = "Top Prompts", company, analytics }) => {
   const [selectedCompetitor, setSelectedCompetitor] = useState('own');
 
   const getTrendIcon = (trend) => {
@@ -38,29 +38,52 @@ const TopPromptsTable = ({ data, title = "Top Prompts", company }) => {
     }
   };
 
+  // Extract competitors from analytics data (those that actually appear in runs)
+  const competitorsFromAnalytics = analytics?.visibilityScoreOverTime?.[0]
+    ? Object.keys(analytics.visibilityScoreOverTime[0])
+        .filter(key => key !== 'date')
+        .map(key => ({
+          name: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim(),
+          dataKey: key
+        }))
+    : [];
+
   // Create competitor list with own company first
-  const competitors = [
-    { id: 'own', name: company?.name || 'Your Business', dataKey: 'acme' },
-    ...(company?.competitors || []).map(comp => ({
-      id: comp.id,
+  const companyDataKey = competitorsFromAnalytics[0]?.dataKey || 'acme';
+  const competitorsList = [
+    { id: 'own', name: company?.name || 'Your Business', dataKey: companyDataKey },
+    ...competitorsFromAnalytics.slice(1).map((comp, idx) => ({
+      id: `comp-${idx}`,
       name: comp.name,
-      dataKey: comp.name.replace(/\s+/g, '').charAt(0).toLowerCase() + comp.name.replace(/\s+/g, '').slice(1)
+      dataKey: comp.dataKey
     }))
   ];
 
   // Get the data key for the selected competitor
-  const selectedDataKey = competitors.find(c => c.id === selectedCompetitor)?.dataKey || 'acme';
+  const selectedDataKey = competitorsList.find(c => c.id === selectedCompetitor)?.dataKey || 'acme';
 
   // Get mention rate for selected competitor from the latest data point
   const getCompetitorMentionRate = (prompt) => {
-    if (!prompt.analytics?.mentionsOverTime) return 0;
+    if (!prompt.analytics?.mentionsOverTime || prompt.analytics.mentionsOverTime.length === 0) {
+      return null; // Return null to indicate no data
+    }
     const latestData = prompt.analytics.mentionsOverTime[prompt.analytics.mentionsOverTime.length - 1];
-    return latestData?.[selectedDataKey] || 0;
+    return latestData?.[selectedDataKey] ?? 0; // Return 0 if key doesn't exist but data does
   };
 
   // Sort prompts by the selected competitor's mention rate
-  const sortedData = [...data].sort((a, b) =>
-    getCompetitorMentionRate(b) - getCompetitorMentionRate(a)
+  const sortedData = [...data].sort((a, b) => {
+    const rateA = getCompetitorMentionRate(a);
+    const rateB = getCompetitorMentionRate(b);
+    // Treat null (no data) as -1 to sort to bottom
+    const numA = rateA === null ? -1 : rateA;
+    const numB = rateB === null ? -1 : rateB;
+    return numB - numA;
+  });
+
+  // Check if any prompt has analytics data
+  const hasAnyData = data.some(prompt =>
+    prompt.analytics?.mentionsOverTime && prompt.analytics.mentionsOverTime.length > 0
   );
 
   return (
@@ -69,7 +92,7 @@ const TopPromptsTable = ({ data, title = "Top Prompts", company }) => {
         <CardTitle>{title}</CardTitle>
         <Tabs value={selectedCompetitor} onValueChange={setSelectedCompetitor}>
           <TabsList>
-            {competitors.map((competitor) => (
+            {competitorsList.map((competitor) => (
               <TabsTrigger key={competitor.id} value={competitor.id}>
                 {competitor.name}
               </TabsTrigger>

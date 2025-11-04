@@ -47,10 +47,24 @@ async function generateMockAnalysis(companyName, competitorNames = []) {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1000));
 
+  // Use hardcoded placeholder competitors if none provided
+  const defaultCompetitors = [
+    'Asana',
+    'Monday.com',
+    'Trello',
+    'Jira',
+    'ClickUp',
+    'Notion',
+    'Basecamp',
+    'Wrike'
+  ];
+
+  const actualCompetitors = competitorNames.length > 0 ? competitorNames : defaultCompetitors;
+
   // Simulate 10 ChatGPT runs with conversations
   const runs = [];
   for (let i = 0; i < 10; i++) {
-    const runData = generateMockConversation(companyName, competitorNames);
+    const runData = generateMockConversation(companyName, actualCompetitors);
     runs.push({
       runNumber: i + 1,
       ...runData
@@ -66,9 +80,9 @@ async function generateMockAnalysis(companyName, competitorNames = []) {
     ? Math.round(mentionedRuns.reduce((sum, r) => sum + r.ourCompany.position, 0) / mentionedRuns.length)
     : null;
 
-  // Calculate competitor metrics
+  // Calculate competitor metrics (use actualCompetitors from above)
   const competitorMetrics = {};
-  competitorNames.forEach(competitor => {
+  actualCompetitors.forEach(competitor => {
     const competitorMentions = runs.filter(r =>
       r.competitors.some(c => c.name === competitor && c.mentioned)
     );
@@ -105,38 +119,58 @@ async function generateMockAnalysis(companyName, competitorNames = []) {
  * @returns {Object} Mock conversation data
  */
 function generateMockConversation(companyName, competitorNames = []) {
-  // Randomly decide how many companies to mention (1-5)
-  const numToMention = Math.floor(Math.random() * 5) + 1;
-
   // Pool of all companies
   const allCompanies = [companyName, ...competitorNames];
 
-  // Shuffle and pick companies to mention
-  const shuffled = [...allCompanies].sort(() => Math.random() - 0.5);
-  const mentionedCompanies = shuffled.slice(0, Math.min(numToMention, allCompanies.length));
+  // Much more realistic: Companies have LOW probability of being mentioned
+  // This ensures varied results across the 10 runs
+  const mentionedCompanies = [];
 
-  // Assign random positions
+  // Shuffle companies first to avoid bias
+  const shuffledCompanies = [...allCompanies].sort(() => Math.random() - 0.5);
+
+  for (const company of shuffledCompanies) {
+    // Each company has only 30-50% chance of being mentioned
+    // This means on average, a company appears in 4-5 out of 10 runs, not all 10
+    const mentionProbability = 0.3 + (Math.random() * 0.2);
+    if (Math.random() < mentionProbability) {
+      mentionedCompanies.push(company);
+    }
+  }
+
+  // Ensure at least 1 company is mentioned per run
+  if (mentionedCompanies.length === 0 && allCompanies.length > 0) {
+    mentionedCompanies.push(allCompanies[Math.floor(Math.random() * allCompanies.length)]);
+  }
+
+  // Limit to max 4 companies per response
+  const finalMentionedCompanies = mentionedCompanies.slice(0, 4);
+
+  // Shuffle AGAIN to randomize positions
+  const shuffledMentions = [...finalMentionedCompanies].sort(() => Math.random() - 0.5);
   const companyPositions = {};
-  mentionedCompanies.forEach((company, idx) => {
+  shuffledMentions.forEach((company, idx) => {
     companyPositions[company] = idx + 1;
   });
 
+  console.log('[Mock Run]', finalMentionedCompanies.map(c => `${c}:#${companyPositions[c]}`).join(', '));
+
   // Generate conversation with citations
-  const conversationData = generateConversationText(mentionedCompanies, companyPositions);
+  const conversationData = generateConversationText(finalMentionedCompanies, companyPositions);
 
   // Build result structure
   const ourCompany = {
     name: companyName,
-    mentioned: mentionedCompanies.includes(companyName),
+    mentioned: finalMentionedCompanies.includes(companyName),
     position: companyPositions[companyName] || null,
-    mentionPercentage: mentionedCompanies.includes(companyName) ? 100 : 0
+    mentionPercentage: finalMentionedCompanies.includes(companyName) ? 100 : 0
   };
 
   const competitors = competitorNames.map(competitor => ({
     name: competitor,
-    mentioned: mentionedCompanies.includes(competitor),
+    mentioned: finalMentionedCompanies.includes(competitor),
     position: companyPositions[competitor] || null,
-    mentionPercentage: mentionedCompanies.includes(competitor) ? 100 : 0
+    mentionPercentage: finalMentionedCompanies.includes(competitor) ? 100 : 0
   }));
 
   return {
