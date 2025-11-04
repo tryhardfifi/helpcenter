@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -9,6 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, TrendingDown, Minus, ExternalLink } from 'lucide-react';
 
@@ -64,7 +66,12 @@ const AttributionTable = ({ data = [], title = "Top Pages", company }) => {
     <Card>
       <CardHeader>
         <div className="space-y-6">
-          <CardTitle>{title}</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>{title}</CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/sources">Show all</Link>
+            </Button>
+          </div>
           <Tabs value={selectedCompetitor} onValueChange={setSelectedCompetitor}>
             <TabsList>
               {competitors.map((competitor) => (
