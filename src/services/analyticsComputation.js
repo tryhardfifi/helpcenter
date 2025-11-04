@@ -324,8 +324,11 @@ function computeTopSources(allPromptRuns, companyName) {
   const sources = Array.from(sourceMap.values()).map(source => {
     const result = {
       url: source.url,
+      title: source.title,
       type: source.type,
-      trend: 'stable' // Could be computed from historical data
+      trend: 'stable', // Could be computed from historical data
+      totalAppearances: source.totalAppearances,
+      competitorMentionCounts: {} // Raw mention counts per competitor
     };
 
     // Add mention rate for each competitor
@@ -337,6 +340,7 @@ function computeTopSources(allPromptRuns, companyName) {
         : 0;
 
       result[compKey] = mentionRate;
+      result.competitorMentionCounts[compKey] = mentions;
     });
 
     // Calculate percentage (share of total appearances)
