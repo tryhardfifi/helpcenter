@@ -18,37 +18,20 @@ import { getDomainColor } from '@/lib/colors';
 const Sources = () => {
   const { company, analytics, loading } = useCompanyData();
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [selectedCompetitor, setSelectedCompetitor] = useState('own');
 
-  // Extract competitors from analytics
-  const competitorsFromAnalytics = analytics?.visibilityScoreOverTime?.[0]
-    ? Object.keys(analytics.visibilityScoreOverTime[0])
-        .filter(key => key !== 'date')
-        .map(key => ({
-          name: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim(),
-          dataKey: key
-        }))
-    : [];
-
-  // Create competitor list with own company first
-  const companyDataKey = competitorsFromAnalytics[0]?.dataKey || 'acme';
-  const competitorsList = [
-    { id: 'own', name: company?.name || 'Your Business', dataKey: companyDataKey },
-    ...competitorsFromAnalytics.slice(1).map((comp, idx) => ({
-      id: `comp-${idx}`,
-      name: comp.name,
-      dataKey: comp.dataKey
-    }))
-  ];
-
-  // Get the data key for the selected competitor
-  const selectedDataKey = competitorsList.find(c => c.id === selectedCompetitor)?.dataKey || 'acme';
-
-  // Filter and sort sources based on type and selected competitor
+  // Filter sources based on type (use first competitor's data as default)
   const filteredSources = useMemo(() => {
     if (!analytics?.topSources) return [];
 
-    let sources = analytics.topSources;
+    // Get first competitor key for mention rate
+    const firstCompKey = analytics?.visibilityScoreOverTime?.[0]
+      ? Object.keys(analytics.visibilityScoreOverTime[0]).filter(key => key !== 'date')[0]
+      : 'acme';
+
+    let sources = analytics.topSources.map(source => ({
+      ...source,
+      mentionRate: source[firstCompKey] || 0
+    }));
 
     // Filter by type
     if (selectedFilter === 'owned') {
@@ -63,18 +46,17 @@ const Sources = () => {
       );
     }
 
-    // Sort by selected competitor's mention rate
-    return sources
-      .map(source => ({
-        ...source,
-        mentionRate: source[selectedDataKey] || 0
-      }))
-      .sort((a, b) => b.mentionRate - a.mentionRate);
-  }, [analytics, selectedFilter, selectedDataKey]);
+    return sources.sort((a, b) => b.mentionRate - a.mentionRate);
+  }, [analytics, selectedFilter]);
 
-  // Process data for domain chart - group by domain using selected competitor
+  // Process data for domain chart - group by domain
   const domainChartData = useMemo(() => {
     if (!analytics?.topSources) return [];
+
+    // Get first competitor key
+    const firstCompKey = analytics?.visibilityScoreOverTime?.[0]
+      ? Object.keys(analytics.visibilityScoreOverTime[0]).filter(key => key !== 'date')[0]
+      : 'acme';
 
     const domainMap = new Map();
 
@@ -89,8 +71,7 @@ const Sources = () => {
         domain = source.url.split('/')[0];
       }
 
-      // Use selected competitor's mention rate
-      const mentionRate = source[selectedDataKey] || 0;
+      const mentionRate = source[firstCompKey] || 0;
 
       if (domainMap.has(domain)) {
         domainMap.set(domain, domainMap.get(domain) + mentionRate);
@@ -106,7 +87,7 @@ const Sources = () => {
     }))
     .sort((a, b) => b.mentions - a.mentions)
     .slice(0, 8); // Top 8 domains
-  }, [analytics, selectedDataKey]);
+  }, [analytics]);
 
   // Process data for source type pie chart
   const sourceTypeData = useMemo(() => {
@@ -305,26 +286,6 @@ const Sources = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Competitor Selection */}
-      {competitorsList.length > 1 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>View by Company</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={selectedCompetitor} onValueChange={setSelectedCompetitor}>
-              <TabsList>
-                {competitorsList.map((competitor) => (
-                  <TabsTrigger key={competitor.id} value={competitor.id}>
-                    {competitor.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Sources Table with Filters */}
       <div className="space-y-4">

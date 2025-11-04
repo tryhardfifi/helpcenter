@@ -59,6 +59,18 @@ const AttributionTable = ({ data = [], title = "Top Pages", company, analytics }
     }))
   ];
 
+  // Get the data key for the selected competitor
+  const selectedDataKey = competitorsList.find(c => c.id === selectedCompetitor)?.dataKey || companyDataKey;
+
+  // Filter and sort data by selected competitor's mention rate
+  const sortedData = data
+    .map(source => ({
+      ...source,
+      mentionRate: source[selectedDataKey] || 0
+    }))
+    .sort((a, b) => b.mentionRate - a.mentionRate)
+    .slice(0, 5); // Top 5 sources
+
   if (!data || data.length === 0) {
     return (
       <Card>
@@ -81,15 +93,17 @@ const AttributionTable = ({ data = [], title = "Top Pages", company, analytics }
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <CardTitle>{title}</CardTitle>
-        <Tabs value={selectedCompetitor} onValueChange={setSelectedCompetitor}>
-          <TabsList>
-            {competitorsList.map((competitor) => (
-              <TabsTrigger key={competitor.id} value={competitor.id}>
-                {competitor.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        {competitorsList.length > 1 && (
+          <Tabs value={selectedCompetitor} onValueChange={setSelectedCompetitor}>
+            <TabsList>
+              {competitorsList.map((competitor) => (
+                <TabsTrigger key={competitor.id} value={competitor.id}>
+                  {competitor.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        )}
       </div>
       <Card className="m-0">
         <CardContent className="p-0">
@@ -103,7 +117,7 @@ const AttributionTable = ({ data = [], title = "Top Pages", company, analytics }
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((page, index) => (
+              {sortedData.map((page, index) => (
                 <TableRow key={index}>
                   <TableCell className="font-medium">
                     <a
