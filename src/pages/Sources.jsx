@@ -18,35 +18,61 @@ import { getDomainColor } from '@/lib/colors';
 const Sources = () => {
   const { company, analytics, loading } = useCompanyData();
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [selectedCompetitor, setSelectedCompetitor] = useState('own');
 
-  // Filter sources based on type
+  // Extract competitors from analytics
+  const competitorsFromAnalytics = analytics?.visibilityScoreOverTime?.[0]
+    ? Object.keys(analytics.visibilityScoreOverTime[0])
+        .filter(key => key !== 'date')
+        .map(key => ({
+          name: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim(),
+          dataKey: key
+        }))
+    : [];
+
+  // Create competitor list with own company first
+  const companyDataKey = competitorsFromAnalytics[0]?.dataKey || 'acme';
+  const competitorsList = [
+    { id: 'own', name: company?.name || 'Your Business', dataKey: companyDataKey },
+    ...competitorsFromAnalytics.slice(1).map((comp, idx) => ({
+      id: `comp-${idx}`,
+      name: comp.name,
+      dataKey: comp.dataKey
+    }))
+  ];
+
+  // Get the data key for the selected competitor
+  const selectedDataKey = competitorsList.find(c => c.id === selectedCompetitor)?.dataKey || 'acme';
+
+  // Filter and sort sources based on type and selected competitor
   const filteredSources = useMemo(() => {
     if (!analytics?.topSources) return [];
 
-    const sources = analytics.topSources;
+    let sources = analytics.topSources;
 
-    if (selectedFilter === 'all') return sources;
-
+    // Filter by type
     if (selectedFilter === 'owned') {
-      return sources.filter(source => source.type === 'own');
-    }
-
-    if (selectedFilter === 'social') {
-      return sources.filter(source => source.type === 'reddit');
-    }
-
-    if (selectedFilter === 'publications') {
-      return sources.filter(source =>
+      sources = sources.filter(source => source.type === 'own');
+    } else if (selectedFilter === 'social') {
+      sources = sources.filter(source => source.type === 'reddit');
+    } else if (selectedFilter === 'publications') {
+      sources = sources.filter(source =>
         source.type === 'publication' ||
         source.type === 'external' ||
         source.type === 'news'
       );
     }
 
-    return sources;
-  }, [analytics, selectedFilter]);
+    // Sort by selected competitor's mention rate
+    return sources
+      .map(source => ({
+        ...source,
+        mentionRate: source[selectedDataKey] || 0
+      }))
+      .sort((a, b) => b.mentionRate - a.mentionRate);
+  }, [analytics, selectedFilter, selectedDataKey]);
 
-  // Process data for domain chart - group by domain
+  // Process data for domain chart - group by domain using selected competitor
   const domainChartData = useMemo(() => {
     if (!analytics?.topSources) return [];
 
@@ -63,10 +89,13 @@ const Sources = () => {
         domain = source.url.split('/')[0];
       }
 
+      // Use selected competitor's mention rate
+      const mentionRate = source[selectedDataKey] || 0;
+
       if (domainMap.has(domain)) {
-        domainMap.set(domain, domainMap.get(domain) + source.mentionRate);
+        domainMap.set(domain, domainMap.get(domain) + mentionRate);
       } else {
-        domainMap.set(domain, source.mentionRate);
+        domainMap.set(domain, mentionRate);
       }
     });
 
@@ -77,7 +106,7 @@ const Sources = () => {
     }))
     .sort((a, b) => b.mentions - a.mentions)
     .slice(0, 8); // Top 8 domains
-  }, [analytics]);
+  }, [analytics, selectedDataKey]);
 
   // Process data for source type pie chart
   const sourceTypeData = useMemo(() => {
@@ -276,6 +305,26 @@ const Sources = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Competitor Selection */}
+      {competitorsList.length > 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>View by Company</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={selectedCompetitor} onValueChange={setSelectedCompetitor}>
+              <TabsList>
+                {competitorsList.map((competitor) => (
+                  <TabsTrigger key={competitor.id} value={competitor.id}>
+                    {competitor.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Sources Table with Filters */}
       <div className="space-y-4">

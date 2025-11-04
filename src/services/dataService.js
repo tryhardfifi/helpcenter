@@ -425,16 +425,60 @@ export const updatePromptAnalytics = async (companyId, promptId) => {
       return;
     }
 
-    // Calculate analytics from runs
-    const mentionsOverTime = runs.map(run => ({
-      date: new Date(run.createdAt).toISOString().split('T')[0],
-      acme: run.mentionPercentage || 0
-    }));
+    // Extract all competitors from runs (those that have competitorMetrics)
+    const allCompetitors = new Set();
+    runs.forEach(run => {
+      if (run.competitorMetrics) {
+        Object.keys(run.competitorMetrics).forEach(competitorName => {
+          allCompetitors.add(competitorName);
+        });
+      }
+    });
 
-    const rankingsOverTime = runs.map(run => ({
-      date: new Date(run.createdAt).toISOString().split('T')[0],
-      acme: run.position || 0
-    }));
+    // Calculate analytics from runs including all competitors
+    const mentionsOverTime = runs.map(run => {
+      const date = new Date(run.createdAt).toISOString().split('T')[0];
+      const dataPoint = { date };
+
+      // Add our company's mention percentage (first competitor is usually our company)
+      const firstCompetitor = Array.from(allCompetitors)[0];
+      if (firstCompetitor) {
+        const compKey = firstCompetitor.replace(/\s+/g, '').charAt(0).toLowerCase() + firstCompetitor.replace(/\s+/g, '').slice(1);
+        dataPoint[compKey] = run.mentionPercentage || 0;
+      }
+
+      // Add all competitor mention percentages
+      if (run.competitorMetrics) {
+        Object.entries(run.competitorMetrics).forEach(([competitorName, metrics]) => {
+          const compKey = competitorName.replace(/\s+/g, '').charAt(0).toLowerCase() + competitorName.replace(/\s+/g, '').slice(1);
+          dataPoint[compKey] = metrics.mentionPercentage || 0;
+        });
+      }
+
+      return dataPoint;
+    });
+
+    const rankingsOverTime = runs.map(run => {
+      const date = new Date(run.createdAt).toISOString().split('T')[0];
+      const dataPoint = { date };
+
+      // Add our company's position (first competitor is usually our company)
+      const firstCompetitor = Array.from(allCompetitors)[0];
+      if (firstCompetitor) {
+        const compKey = firstCompetitor.replace(/\s+/g, '').charAt(0).toLowerCase() + firstCompetitor.replace(/\s+/g, '').slice(1);
+        dataPoint[compKey] = run.position || 0;
+      }
+
+      // Add all competitor positions
+      if (run.competitorMetrics) {
+        Object.entries(run.competitorMetrics).forEach(([competitorName, metrics]) => {
+          const compKey = competitorName.replace(/\s+/g, '').charAt(0).toLowerCase() + competitorName.replace(/\s+/g, '').slice(1);
+          dataPoint[compKey] = metrics.averagePosition || 0;
+        });
+      }
+
+      return dataPoint;
+    });
 
     // Calculate average position from all runs
     const positions = runs.filter(r => r.position).map(r => r.position);

@@ -249,6 +249,16 @@ function computeTopSources(allPromptRuns, companyName) {
   const sourceMap = new Map();
   let totalRunsWithSources = 0;
 
+  // Extract all competitors from runs first
+  const allCompetitors = new Set();
+  allPromptRuns.forEach(run => {
+    if (run.competitorMetrics) {
+      Object.keys(run.competitorMetrics).forEach(competitorName => {
+        allCompetitors.add(competitorName);
+      });
+    }
+  });
+
   // Extract sources from all runs
   allPromptRuns.forEach(run => {
     if (!run.detailedRuns) return;
@@ -258,18 +268,37 @@ function computeTopSources(allPromptRuns, companyName) {
 
       totalRunsWithSources++;
 
-      // Track if company was mentioned in this run
-      const companyMentioned = detailedRun.ourCompany?.mentioned || false;
+      // Track which competitors were mentioned in this run
+      const mentionedCompetitors = new Set();
+
+      // Check our company
+      if (detailedRun.ourCompany?.mentioned) {
+        mentionedCompetitors.add(detailedRun.ourCompany.name);
+      }
+
+      // Check all competitors
+      if (detailedRun.competitors) {
+        detailedRun.competitors.forEach(comp => {
+          if (comp.mentioned) {
+            mentionedCompetitors.add(comp.name);
+          }
+        });
+      }
 
       detailedRun.sources.forEach(source => {
         const key = source.url;
 
         if (!sourceMap.has(key)) {
+          const competitorMentions = {};
+          allCompetitors.forEach(comp => {
+            competitorMentions[comp] = 0;
+          });
+
           sourceMap.set(key, {
             url: source.url,
             title: source.title,
             totalAppearances: 0,
-            mentionsWithCompany: 0,
+            competitorMentions, // Track mentions per competitor
             type: inferSourceType(source.url)
           });
         }
@@ -277,9 +306,12 @@ function computeTopSources(allPromptRuns, companyName) {
         const sourceData = sourceMap.get(key);
         sourceData.totalAppearances++;
 
-        if (companyMentioned) {
-          sourceData.mentionsWithCompany++;
-        }
+        // Increment count for each mentioned competitor
+        mentionedCompetitors.forEach(competitorName => {
+          if (sourceData.competitorMentions[competitorName] !== undefined) {
+            sourceData.competitorMentions[competitorName]++;
+          }
+        });
       });
     });
   });
@@ -288,28 +320,44 @@ function computeTopSources(allPromptRuns, companyName) {
     return [];
   }
 
-  // Convert to array and calculate metrics
+  // Convert to array and calculate metrics per competitor
   const sources = Array.from(sourceMap.values()).map(source => {
-    // Mention rate: % of times company was mentioned when this source appeared
-    const mentionRate = source.totalAppearances > 0
-      ? Math.round((source.mentionsWithCompany / source.totalAppearances) * 100)
-      : 0;
-
-    // Percentage: Share of total appearances
-    const percentage = Math.round((source.totalAppearances / totalRunsWithSources) * 100);
-
-    return {
+    const result = {
       url: source.url,
       type: source.type,
-      mentionRate,
-      percentage,
       trend: 'stable' // Could be computed from historical data
     };
+
+    // Add mention rate for each competitor
+    allCompetitors.forEach(competitorName => {
+      const compKey = competitorName.replace(/\s+/g, '').charAt(0).toLowerCase() + competitorName.replace(/\s+/g, '').slice(1);
+      const mentions = source.competitorMentions[competitorName] || 0;
+      const mentionRate = source.totalAppearances > 0
+        ? Math.round((mentions / source.totalAppearances) * 100)
+        : 0;
+
+      result[compKey] = mentionRate;
+    });
+
+    // Calculate percentage (share of total appearances)
+    result.percentage = Math.round((source.totalAppearances / totalRunsWithSources) * 100);
+
+    return result;
   });
 
-  // Sort by mention rate (descending) and take top 20
+  // Sort by first competitor's mention rate (descending) and take top 20
+  const firstCompetitor = Array.from(allCompetitors)[0];
+  const firstCompKey = firstCompetitor
+    ? firstCompetitor.replace(/\s+/g, '').charAt(0).toLowerCase() + firstCompetitor.replace(/\s+/g, '').slice(1)
+    : null;
+
   return sources
-    .sort((a, b) => b.mentionRate - a.mentionRate)
+    .sort((a, b) => {
+      if (firstCompKey) {
+        return (b[firstCompKey] || 0) - (a[firstCompKey] || 0);
+      }
+      return 0;
+    })
     .slice(0, 20);
 }
 
