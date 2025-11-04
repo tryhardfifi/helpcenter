@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -10,11 +9,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, TrendingDown, Minus, ArrowRight } from 'lucide-react';
 
 const TopPromptsTable = ({ data, title = "Top Prompts", company, analytics }) => {
-  const [selectedCompetitor, setSelectedCompetitor] = useState('own');
+  const selectedCompetitor = 'own';
 
   const getTrendIcon = (trend) => {
     switch (trend) {
@@ -88,18 +86,7 @@ const TopPromptsTable = ({ data, title = "Top Prompts", company, analytics }) =>
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <CardTitle>{title}</CardTitle>
-        <Tabs value={selectedCompetitor} onValueChange={setSelectedCompetitor}>
-          <TabsList>
-            {competitorsList.map((competitor) => (
-              <TabsTrigger key={competitor.id} value={competitor.id}>
-                {competitor.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </div>
+      <CardTitle>{title}</CardTitle>
       <Card className="m-0">
         <CardContent className="p-0">
           <Table>
