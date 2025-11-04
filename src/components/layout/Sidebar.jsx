@@ -24,6 +24,7 @@ const Sidebar = () => {
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/prompts', label: 'Prompts', icon: FileText },
     { path: '/sources', label: 'Sources', icon: Globe },
+    { path: '/competitors', label: 'Competitors', icon: Building2 },
   ];
 
   const handleLogout = async () => {

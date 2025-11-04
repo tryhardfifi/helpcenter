@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, TrendingDown, Minus, ExternalLink } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { getDomainColor } from '@/lib/colors';
 
 const Sources = () => {
   const { company, loading } = useCompanyData();
@@ -119,15 +120,6 @@ const Sources = () => {
     }
   };
 
-  const getBarColor = (domain) => {
-    if (domain.includes('acme.com')) return '#000000';
-    if (domain.includes('reddit')) return '#FF4500';
-    if (domain.includes('techcrunch')) return '#0A66C2';
-    if (domain.includes('ycombinator')) return '#FF6600';
-    if (domain.includes('medium')) return '#00AB6C';
-    if (domain.includes('producthunt')) return '#DA552F';
-    return '#666666';
-  };
 
   const filters = [
     { id: 'all', label: 'All' },
@@ -186,7 +178,7 @@ const Sources = () => {
               />
               <Bar dataKey="mentions" radius={[8, 8, 0, 0]}>
                 {domainChartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getBarColor(entry.domain)} />
+                  <Cell key={`cell-${index}`} fill={getDomainColor(entry.domain)} />
                 ))}
               </Bar>
             </BarChart>
