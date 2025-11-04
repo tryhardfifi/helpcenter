@@ -1,5 +1,5 @@
 import { db } from "../lib/firebase";
-import { doc, getDoc, collection, getDocs, updateDoc, addDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, updateDoc, addDoc, setDoc, deleteDoc } from "firebase/firestore";
 import {
   getCompany as getMockCompany,
   getCompanyPrompts as getMockCompanyPrompts,
@@ -178,6 +178,28 @@ export const createPrompt = async (companyId, promptText) => {
     return { id: docRef.id, ...newPrompt };
   } catch (error) {
     console.error("Error creating prompt in Firestore:", error);
+    throw error;
+  }
+};
+
+export const deletePrompt = async (companyId, promptId) => {
+  if (useMockData) {
+    // For mock mode, just simulate success
+    console.log("Mock mode: Would delete prompt:", promptId);
+    return true;
+  }
+
+  if (!companyId || !promptId) {
+    console.warn("companyId and promptId are required to delete a prompt");
+    throw new Error("Company ID and Prompt ID are required");
+  }
+
+  try {
+    const promptRef = doc(db, "companies", companyId, "prompts", promptId);
+    await deleteDoc(promptRef);
+    return true;
+  } catch (error) {
+    console.error("Error deleting prompt from Firestore:", error);
     throw error;
   }
 };

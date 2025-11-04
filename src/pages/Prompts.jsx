@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useCompanyData } from '@/contexts/CompanyDataContext';
 import { useCompanyId } from '@/hooks/useCompanyId';
-import { getDataSource, createPrompt } from '@/services/dataService';
+import { getDataSource, createPrompt, deletePrompt } from '@/services/dataService';
 import { formatRelativeTime } from '@/utils/dateUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -24,7 +24,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Database, Plus } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Database, Plus, Trash2 } from 'lucide-react';
 
 const Prompts = () => {
   const { prompts, loading, refetch } = useCompanyData();
@@ -32,6 +42,8 @@ const Prompts = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [promptText, setPromptText] = useState('');
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState(null);
+  const [promptToDelete, setPromptToDelete] = useState(null);
 
   const handleCreatePrompt = async () => {
     if (!promptText.trim()) return;
@@ -47,6 +59,27 @@ const Prompts = () => {
       alert('Failed to create prompt');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleDeleteClick = (prompt, e) => {
+    e.stopPropagation();
+    setPromptToDelete(prompt);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!promptToDelete) return;
+
+    setDeleting(promptToDelete.id);
+    try {
+      await deletePrompt(companyId, promptToDelete.id);
+      await refetch();
+      setPromptToDelete(null);
+    } catch (error) {
+      console.error('Error deleting prompt:', error);
+      alert('Failed to delete prompt');
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -133,6 +166,7 @@ const Prompts = () => {
                 <TableHead className="text-right">Mention Rate</TableHead>
                 <TableHead className="text-right">Avg. Rank</TableHead>
                 <TableHead className="text-right">Last Updated</TableHead>
+                <TableHead className="w-[100px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -154,6 +188,17 @@ const Prompts = () => {
                   <TableCell className="text-right font-semibold">{prompt.analytics.averagePosition}</TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">
                     {formatRelativeTime(prompt.lastUpdated)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => handleDeleteClick(prompt, e)}
+                      disabled={deleting === prompt.id}
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -207,6 +252,28 @@ const Prompts = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!promptToDelete} onOpenChange={(open) => !open && setPromptToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Prompt?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{promptToDelete?.text}"? This action cannot be undone and will remove all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPromptToDelete(null)} disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
