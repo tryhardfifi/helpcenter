@@ -12,7 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, TrendingDown, Minus, ExternalLink } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { getDomainColor } from '@/lib/colors';
 
 const Sources = () => {
@@ -66,6 +66,35 @@ const Sources = () => {
     }))
     .sort((a, b) => b.mentions - a.mentions)
     .slice(0, 8); // Top 8 domains
+  }, [company]);
+
+  // Process data for source type pie chart
+  const sourceTypeData = useMemo(() => {
+    if (!company?.analytics?.topSources) return [];
+
+    const typeCounts = {
+      owned: 0,
+      social: 0,
+      publications: 0
+    };
+
+    company.analytics.topSources.forEach(source => {
+      if (source.type === 'own') {
+        typeCounts.owned++;
+      } else if (source.type === 'reddit') {
+        typeCounts.social++;
+      } else if (source.type === 'news' || source.type === 'external') {
+        typeCounts.publications++;
+      }
+    });
+
+    const total = typeCounts.owned + typeCounts.social + typeCounts.publications;
+
+    return [
+      { name: 'Owned', value: typeCounts.owned, percentage: total > 0 ? ((typeCounts.owned / total) * 100).toFixed(1) : 0, fill: '#171717' },
+      { name: 'Social', value: typeCounts.social, percentage: total > 0 ? ((typeCounts.social / total) * 100).toFixed(1) : 0, fill: '#525252' },
+      { name: 'Publications', value: typeCounts.publications, percentage: total > 0 ? ((typeCounts.publications / total) * 100).toFixed(1) : 0, fill: '#a3a3a3' }
+    ].filter(item => item.value > 0);
   }, [company]);
 
   const getTrendIcon = (trend) => {
@@ -146,45 +175,96 @@ const Sources = () => {
         </p>
       </div>
 
-      {/* Domain Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Top Citing Domains</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={domainChartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
-              <XAxis
-                dataKey="domain"
-                stroke="#000"
-                style={{ fontSize: '12px' }}
-                angle={-45}
-                textAnchor="end"
-                height={120}
-              />
-              <YAxis
-                stroke="#000"
-                style={{ fontSize: '12px' }}
-                label={{ value: 'Mention Rate (%)', angle: -90, position: 'insideLeft' }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e5e5',
-                  borderRadius: '6px'
-                }}
-                formatter={(value) => [`${value}%`, 'Mention Rate']}
-              />
-              <Bar dataKey="mentions" radius={[8, 8, 0, 0]}>
-                {domainChartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getDomainColor(entry.domain)} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Domain Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Most Cited Domains</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={domainChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+                <XAxis
+                  dataKey="domain"
+                  stroke="#000"
+                  style={{ fontSize: '12px' }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={120}
+                />
+                <YAxis
+                  stroke="#000"
+                  style={{ fontSize: '12px' }}
+                  label={{ value: 'Mention Rate (%)', angle: -90, position: 'insideLeft' }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #e5e5e5',
+                    borderRadius: '6px'
+                  }}
+                  formatter={(value) => [`${value}%`, 'Mention Rate']}
+                />
+                <Bar dataKey="mentions" radius={[8, 8, 0, 0]}>
+                  {domainChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={getDomainColor(entry.domain)} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Source Type Pie Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Source Types</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={400}>
+              <PieChart>
+                <Pie
+                  data={sourceTypeData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={{
+                    stroke: '#64748b',
+                    strokeWidth: 1
+                  }}
+                  label={({ name, percentage }) => `${name} (${percentage}%)`}
+                  outerRadius={130}
+                  innerRadius={60}
+                  paddingAngle={0}
+                  dataKey="value"
+                  animationDuration={500}
+                  style={{ fontSize: '14px', fontWeight: '500' }}
+                >
+                  {sourceTypeData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} stroke="#fff" strokeWidth={2} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #e5e5e5',
+                    borderRadius: '6px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                  }}
+                  formatter={(value, name, props) => [`${value} sources (${props.payload.percentage}%)`, name]}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  iconType="circle"
+                  wrapperStyle={{ paddingTop: '20px' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Sources Table with Filters */}
       <Card>
