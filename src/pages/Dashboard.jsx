@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useCompanyData } from '@/contexts/CompanyDataContext';
-import { getDataSource, executePromptRun, getAllPromptRuns, saveAnalytics } from '@/services/dataService';
+import { getDataSource, executePromptRun, getAllPromptRuns, saveAnalytics, updateSourcesFromRuns } from '@/services/dataService';
 import { runAllPromptsAndComputeAnalytics } from '@/services/bulkPromptRunner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -103,16 +103,26 @@ const Dashboard = () => {
         return result;
       };
 
+      // Update sources function wrapper
+      const updateSourcesFn = async (companyId, allRuns, companyUrl) => {
+        console.log(`📚 Updating sources from ${allRuns.length} runs...`);
+        const result = await updateSourcesFromRuns(companyId, allRuns, companyUrl);
+        console.log('✅ Sources updated:', result);
+        return result;
+      };
+
       // Run all prompts and compute analytics
       console.log('🎯 Calling bulk runner...');
       const results = await runAllPromptsAndComputeAnalytics({
         companyId: company.id,
         companyName: company.name,
+        companyUrl: company.url,
         prompts: prompts,
         competitors: analytics?.competitors || [], // Use competitors from analytics
         executePromptRunFn,
         getAllRunsFn,
         saveAnalyticsFn,
+        updateSourcesFn,
         onProgress
       });
 

@@ -27,22 +27,26 @@ import { computeDailyAnalytics } from './analyticsComputation';
  * @param {Object} params - Parameters for bulk execution
  * @param {string} params.companyId - The company ID
  * @param {string} params.companyName - The company name
+ * @param {string} params.companyUrl - The company URL (optional, for owned source detection)
  * @param {Array<Object>} params.prompts - Array of prompt objects with {id, text}
  * @param {Array<Object>} params.competitors - Array of competitor objects with {id, name}
  * @param {Function} params.executePromptRunFn - Function to execute a prompt: (promptId, promptData) => Promise
  * @param {Function} params.getAllRunsFn - Function to get all runs: () => Promise<Array>
  * @param {Function} params.saveAnalyticsFn - Function to save analytics: (date, analyticsData) => Promise
+ * @param {Function} params.updateSourcesFn - Optional function to update sources: (companyId, allRuns, companyUrl) => Promise
  * @param {Function} params.onProgress - Optional callback for progress updates: (message, current, total) => void
  * @returns {Promise<Object>} Results with runs and analytics
  */
 export async function runAllPromptsAndComputeAnalytics({
   companyId,
   companyName,
+  companyUrl = null,
   prompts = [],
   competitors = [],
   executePromptRunFn,
   getAllRunsFn,
   saveAnalyticsFn,
+  updateSourcesFn = null,
   onProgress = null
 }) {
   const results = {
@@ -167,6 +171,31 @@ export async function runAllPromptsAndComputeAnalytics({
 
     if (onProgress) {
       onProgress('Analytics computed successfully!', prompts.length, prompts.length);
+    }
+
+    // Phase 3: Update sources collection from all runs (if function provided)
+    if (updateSourcesFn) {
+      try {
+        if (onProgress) {
+          onProgress('Updating sources from runs...', prompts.length, prompts.length);
+        }
+
+        const sourcesResult = await updateSourcesFn(companyId, allRuns, companyUrl);
+
+        results.sources = sourcesResult;
+
+        console.log('[bulkPromptRunner] Sources updated:', sourcesResult);
+
+        if (onProgress) {
+          onProgress('Sources updated successfully!', prompts.length, prompts.length);
+        }
+      } catch (error) {
+        console.error('Error updating sources:', error);
+        results.errors.push({
+          phase: 'sources',
+          error: error.message
+        });
+      }
     }
 
   } catch (error) {

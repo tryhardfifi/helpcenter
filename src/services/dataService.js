@@ -718,3 +718,280 @@ export const fetchAnalyticsForDashboard = async (companyId, companyName, competi
     return null;
   }
 };
+
+// Sources operations
+/**
+ * Convert URL to a valid Firestore document ID
+ * Firestore doc IDs cannot contain forward slashes, so we encode them
+ */
+function encodeUrlForDocId(url) {
+  // Use btoa (browser-compatible base64 encoding)
+  try {
+    return btoa(url).replace(/\//g, '_').replace(/\+/g, '-').replace(/=/g, '');
+  } catch (e) {
+    // Fallback for URLs with special characters
+    return encodeURIComponent(url).replace(/[^a-zA-Z0-9]/g, '_').substring(0, 1500);
+  }
+}
+
+/**
+ * Save or update a source in the sources collection
+ * Increments citedCount each time the source is encountered
+ *
+ * @param {string} companyId - The company ID
+ * @param {string} sourceUrl - The source URL
+ * @param {string} sourceTitle - The source title
+ * @param {string} sourceType - The source type (optional)
+ * @returns {Promise<Object>} The saved source document
+ */
+export const saveSourceToFirestore = async (companyId, sourceUrl, sourceTitle, sourceType = null) => {
+  if (useMockData) {
+    console.log("Mock mode: Would save/update source:", sourceUrl);
+    return { url: sourceUrl, title: sourceTitle, citedCount: 1 };
+  }
+
+  if (!companyId || !sourceUrl) {
+    console.warn("companyId and sourceUrl are required for saveSourceToFirestore");
+    throw new Error("Company ID and source URL are required");
+  }
+
+  try {
+    // Use encoded URL as document ID
+    const docId = encodeUrlForDocId(sourceUrl);
+    const sourceRef = doc(db, "companies", companyId, "sources", docId);
+
+    // Get existing document
+    const sourceSnap = await getDoc(sourceRef);
+
+    if (sourceSnap.exists()) {
+      // Source exists - increment citedCount
+      const existingData = sourceSnap.data();
+      const newCitedCount = (existingData.citedCount || 0) + 1;
+
+      await updateDoc(sourceRef, {
+        citedCount: newCitedCount,
+        lastSeen: new Date().toISOString(),
+        // Update title if it changed
+        title: sourceTitle
+      });
+
+      return {
+        id: docId,
+        url: sourceUrl,
+        title: sourceTitle,
+        citedCount: newCitedCount,
+        type: existingData.type || sourceType,
+        firstSeen: existingData.firstSeen,
+        lastSeen: new Date().toISOString()
+      };
+    } else {
+      // New source - create with citedCount = 1
+      const now = new Date().toISOString();
+      const newSource = {
+        url: sourceUrl,
+        title: sourceTitle,
+        type: sourceType,
+        citedCount: 1,
+        firstSeen: now,
+        lastSeen: now
+      };
+
+      await setDoc(sourceRef, newSource);
+
+      return {
+        id: docId,
+        ...newSource
+      };
+    }
+  } catch (error) {
+    console.error("Error saving source to Firestore:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get all sources for a company
+ *
+ * @param {string} companyId - The company ID
+ * @returns {Promise<Array>} Array of source documents
+ */
+export const getCompanySources = async (companyId) => {
+  if (useMockData) {
+    console.log("Mock mode: Would fetch sources");
+    return [];
+  }
+
+  if (!companyId) {
+    console.warn("No companyId provided to getCompanySources");
+    return [];
+  }
+
+  try {
+    const sourcesRef = collection(db, "companies", companyId, "sources");
+    const sourcesSnap = await getDocs(sourcesRef);
+
+    return sourcesSnap.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.error("Error fetching sources from Firestore:", error);
+    return [];
+  }
+};
+
+/**
+ * Extract and save all sources from prompt runs to the sources collection
+ * This should be called after running all prompts for the day
+ *
+ * @param {string} companyId - The company ID
+ * @param {Array<Object>} allRuns - All prompt runs to extract sources from
+ * @param {string} companyUrl - The company's URL for owned source detection (optional)
+ * @returns {Promise<Object>} Summary of sources processed
+ */
+export const updateSourcesFromRuns = async (companyId, allRuns, companyUrl = null) => {
+  if (useMockData) {
+    console.log("Mock mode: Would update sources from runs");
+    return { totalSources: 0, newSources: 0, updatedSources: 0 };
+  }
+
+  if (!companyId || !allRuns || allRuns.length === 0) {
+    console.warn("companyId and allRuns are required for updateSourcesFromRuns");
+    return { totalSources: 0, newSources: 0, updatedSources: 0 };
+  }
+
+  try {
+    const sourceMap = new Map();
+
+    // Extract all sources from all runs
+    allRuns.forEach(run => {
+      if (!run.detailedRuns) return;
+
+      run.detailedRuns.forEach(detailedRun => {
+        if (!detailedRun.sources || detailedRun.sources.length === 0) return;
+
+        detailedRun.sources.forEach(source => {
+          if (!sourceMap.has(source.url)) {
+            sourceMap.set(source.url, {
+              url: source.url,
+              title: source.title,
+              count: 0
+            });
+          }
+          // Increment count for each occurrence
+          sourceMap.get(source.url).count++;
+        });
+      });
+    });
+
+    // Save each unique source to Firestore
+    let newSources = 0;
+    let updatedSources = 0;
+
+    const sourcePromises = Array.from(sourceMap.entries()).map(async ([url, sourceData]) => {
+      const docId = encodeUrlForDocId(url);
+      const sourceRef = doc(db, "companies", companyId, "sources", docId);
+      const sourceSnap = await getDoc(sourceRef);
+
+      if (sourceSnap.exists()) {
+        // Existing source - increment by the count
+        const existingData = sourceSnap.data();
+        const newCitedCount = (existingData.citedCount || 0) + sourceData.count;
+
+        await updateDoc(sourceRef, {
+          citedCount: newCitedCount,
+          lastSeen: new Date().toISOString(),
+          title: sourceData.title
+        });
+
+        updatedSources++;
+      } else {
+        // New source
+        const now = new Date().toISOString();
+        await setDoc(sourceRef, {
+          url: sourceData.url,
+          title: sourceData.title,
+          type: inferSourceType(sourceData.url, companyUrl),
+          citedCount: sourceData.count,
+          firstSeen: now,
+          lastSeen: now
+        });
+
+        newSources++;
+      }
+    });
+
+    await Promise.all(sourcePromises);
+
+    console.log(`[updateSourcesFromRuns] Processed ${sourceMap.size} sources: ${newSources} new, ${updatedSources} updated`);
+
+    return {
+      totalSources: sourceMap.size,
+      newSources,
+      updatedSources
+    };
+  } catch (error) {
+    console.error("Error updating sources from runs:", error);
+    throw error;
+  }
+};
+
+/**
+ * Extract domain from URL
+ */
+function extractDomain(url) {
+  try {
+    const urlObj = new URL(url);
+    // Get hostname and remove www. prefix
+    return urlObj.hostname.replace(/^www\./, '');
+  } catch (e) {
+    return '';
+  }
+}
+
+/**
+ * Infer source type from URL
+ * @param {string} url - The source URL
+ * @param {string} companyUrl - The company's URL (optional)
+ * @returns {string} - "owned", "social", or "external"
+ */
+function inferSourceType(url, companyUrl = null) {
+  const urlLower = url.toLowerCase();
+
+  // Check if it's an owned source (company's own domain)
+  if (companyUrl) {
+    const companyDomain = extractDomain(companyUrl);
+    const sourceDomain = extractDomain(url);
+
+    if (companyDomain && sourceDomain && sourceDomain === companyDomain) {
+      return 'owned';
+    }
+  }
+
+  // Social media and community platforms
+  const socialPlatforms = [
+    'reddit.com',
+    'twitter.com',
+    'x.com',
+    'linkedin.com',
+    'facebook.com',
+    'instagram.com',
+    'quora.com',
+    'yelp.com',
+    'youtube.com',
+    'tiktok.com',
+    'discord.com',
+    'slack.com',
+    'medium.com',
+    'pinterest.com'
+  ];
+
+  for (const platform of socialPlatforms) {
+    if (urlLower.includes(platform)) {
+      return 'social';
+    }
+  }
+
+  // Everything else is external
+  return 'external';
+}

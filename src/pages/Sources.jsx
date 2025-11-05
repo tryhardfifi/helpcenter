@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useCompanyData } from '@/contexts/CompanyDataContext';
+import { getCompanySources } from '@/services/dataService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -16,8 +17,29 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { getDomainColor } from '@/lib/colors';
 
 const Sources = () => {
-  const { company, analytics, loading } = useCompanyData();
+  const { company, prompts, analytics, loading } = useCompanyData();
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [sources, setSources] = useState([]);
+  const [sourcesLoading, setSourcesLoading] = useState(true);
+
+  // Fetch sources from Firestore
+  useEffect(() => {
+    const fetchSources = async () => {
+      if (!company?.id) return;
+
+      setSourcesLoading(true);
+      try {
+        const fetchedSources = await getCompanySources(company.id);
+        setSources(fetchedSources);
+      } catch (error) {
+        console.error('Error fetching sources:', error);
+      } finally {
+        setSourcesLoading(false);
+      }
+    };
+
+    fetchSources();
+  }, [company?.id]);
 
   // Helper function to get favicon URL from domain
   const getFaviconUrl = (url) => {
@@ -29,49 +51,48 @@ const Sources = () => {
     }
   };
 
-  // Filter sources based on type (use first competitor's data as default)
+  // Calculate total runs (prompts × 10)
+  const totalRuns = useMemo(() => {
+    return (prompts?.length || 0) * 10;
+  }, [prompts]);
+
+  // Filter sources and calculate cited rate
   const filteredSources = useMemo(() => {
-    if (!analytics?.topSources) return [];
+    if (!sources || sources.length === 0) return [];
 
-    // Get first competitor key for mention rate
-    const firstCompKey = analytics?.visibilityScoreOverTime?.[0]
-      ? Object.keys(analytics.visibilityScoreOverTime[0]).filter(key => key !== 'date')[0]
-      : 'acme';
+    let filteredList = sources.map(source => {
+      // Calculate cited rate: (citedCount / totalRuns) * 100
+      const citedRate = totalRuns > 0
+        ? ((source.citedCount / totalRuns) * 100).toFixed(1)
+        : 0;
 
-    let sources = analytics.topSources.map(source => ({
-      ...source,
-      mentionRate: source[firstCompKey] || 0,
-      mentionCount: source.competitorMentionCounts?.[firstCompKey] || 0
-    }));
+      return {
+        ...source,
+        citedRate: parseFloat(citedRate),
+        citedCount: source.citedCount || 0
+      };
+    });
 
     // Filter by type
     if (selectedFilter === 'owned') {
-      sources = sources.filter(source => source.type === 'own');
+      filteredList = filteredList.filter(source => source.type === 'owned');
     } else if (selectedFilter === 'social') {
-      sources = sources.filter(source => source.type === 'reddit');
-    } else if (selectedFilter === 'publications') {
-      sources = sources.filter(source =>
-        source.type === 'publication' ||
-        source.type === 'external' ||
-        source.type === 'news'
-      );
+      filteredList = filteredList.filter(source => source.type === 'social');
+    } else if (selectedFilter === 'external') {
+      filteredList = filteredList.filter(source => source.type === 'external');
     }
 
-    return sources.sort((a, b) => b.mentionRate - a.mentionRate);
-  }, [analytics, selectedFilter]);
+    // Sort by cited count (descending)
+    return filteredList.sort((a, b) => b.citedCount - a.citedCount);
+  }, [sources, selectedFilter, totalRuns]);
 
   // Process data for domain chart - group by domain
   const domainChartData = useMemo(() => {
-    if (!analytics?.topSources) return [];
-
-    // Get first competitor key
-    const firstCompKey = analytics?.visibilityScoreOverTime?.[0]
-      ? Object.keys(analytics.visibilityScoreOverTime[0]).filter(key => key !== 'date')[0]
-      : 'acme';
+    if (!sources || sources.length === 0) return [];
 
     const domainMap = new Map();
 
-    analytics.topSources.forEach(source => {
+    sources.forEach(source => {
       // Extract domain from URL
       let domain;
       try {
@@ -82,52 +103,52 @@ const Sources = () => {
         domain = source.url.split('/')[0];
       }
 
-      const mentionRate = source[firstCompKey] || 0;
+      const citedCount = source.citedCount || 0;
 
       if (domainMap.has(domain)) {
-        domainMap.set(domain, domainMap.get(domain) + mentionRate);
+        domainMap.set(domain, domainMap.get(domain) + citedCount);
       } else {
-        domainMap.set(domain, mentionRate);
+        domainMap.set(domain, citedCount);
       }
     });
 
-    // Convert to array and sort by mention rate
-    return Array.from(domainMap, ([domain, mentions]) => ({
+    // Convert to array and sort by cited count
+    return Array.from(domainMap, ([domain, citedCount]) => ({
       domain,
-      mentions: parseFloat(mentions.toFixed(1))
+      citedCount: citedCount
     }))
-    .sort((a, b) => b.mentions - a.mentions)
+    .sort((a, b) => b.citedCount - a.citedCount)
     .slice(0, 8); // Top 8 domains
-  }, [analytics]);
+  }, [sources]);
 
   // Process data for source type pie chart
   const sourceTypeData = useMemo(() => {
-    if (!analytics?.topSources) return [];
+    if (!sources || sources.length === 0) return [];
 
     const typeCounts = {
       owned: 0,
       social: 0,
-      publications: 0
+      external: 0
     };
 
-    analytics.topSources.forEach(source => {
-      if (source.type === 'own') {
+    sources.forEach(source => {
+      if (source.type === 'owned') {
         typeCounts.owned++;
-      } else if (source.type === 'reddit') {
+      } else if (source.type === 'social') {
         typeCounts.social++;
-      } else if (source.type === 'publication' || source.type === 'external' || source.type === 'news') {
-        typeCounts.publications++;
+      } else if (source.type === 'external') {
+        typeCounts.external++;
       }
     });
 
-    const total = typeCounts.owned + typeCounts.social + typeCounts.publications;
+    const total = typeCounts.owned + typeCounts.social + typeCounts.external;
 
     return [
       { name: 'Owned', value: typeCounts.owned, percentage: total > 0 ? ((typeCounts.owned / total) * 100).toFixed(1) : 0, fill: '#171717' },
       { name: 'Social', value: typeCounts.social, percentage: total > 0 ? ((typeCounts.social / total) * 100).toFixed(1) : 0, fill: '#525252' },
-      { name: 'External', value: typeCounts.publications, percentage: total > 0 ? ((typeCounts.publications / total) * 100).toFixed(1) : 0, fill: '#a3a3a3' }
+      { name: 'External', value: typeCounts.external, percentage: total > 0 ? ((typeCounts.external / total) * 100).toFixed(1) : 0, fill: '#a3a3a3' }
     ].filter(item => item.value > 0);
-  }, [analytics]);
+  }, [sources]);
 
   const getTrendIcon = (trend) => {
     switch (trend) {
@@ -153,13 +174,11 @@ const Sources = () => {
 
   const getTypeLabel = (type) => {
     switch (type) {
-      case 'own':
+      case 'owned':
         return 'Owned';
-      case 'reddit':
+      case 'social':
         return 'Social';
-      case 'publication':
       case 'external':
-      case 'news':
         return 'External';
       default:
         return type;
@@ -168,13 +187,11 @@ const Sources = () => {
 
   const getTypeVariant = (type) => {
     switch (type) {
-      case 'own':
+      case 'owned':
         return 'default';
-      case 'reddit':
+      case 'social':
         return 'secondary';
-      case 'publication':
       case 'external':
-      case 'news':
         return 'outline';
       default:
         return 'outline';
@@ -186,10 +203,10 @@ const Sources = () => {
     { id: 'all', label: 'All' },
     { id: 'owned', label: 'Owned' },
     { id: 'social', label: 'Social' },
-    { id: 'publications', label: 'External' },
+    { id: 'external', label: 'External' },
   ];
 
-  if (loading) {
+  if (loading || sourcesLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <p className="text-muted-foreground">Loading...</p>
@@ -229,7 +246,7 @@ const Sources = () => {
                 <YAxis
                   stroke="#000"
                   style={{ fontSize: '12px' }}
-                  label={{ value: 'Mention Rate (%)', angle: -90, position: 'insideLeft' }}
+                  label={{ value: 'Cited Count', angle: -90, position: 'insideLeft' }}
                 />
                 <Tooltip
                   contentStyle={{
@@ -237,9 +254,9 @@ const Sources = () => {
                     border: '1px solid #e5e5e5',
                     borderRadius: '6px'
                   }}
-                  formatter={(value) => [`${value}%`, 'Mention Rate']}
+                  formatter={(value) => [value, 'Cited Count']}
                 />
-                <Bar dataKey="mentions" radius={[8, 8, 0, 0]}>
+                <Bar dataKey="citedCount" radius={[8, 8, 0, 0]}>
                   {domainChartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={getDomainColor(entry.domain)} />
                   ))}
@@ -329,8 +346,7 @@ const Sources = () => {
                   <TableRow>
                     <TableHead className="w-auto">Source</TableHead>
                     <TableHead className="text-center w-24">Type</TableHead>
-                    <TableHead className="text-right w-40">Cited</TableHead>
-                    <TableHead className="text-center w-28">Trend</TableHead>
+                    <TableHead className="text-right w-32">Cited</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -369,19 +385,8 @@ const Sources = () => {
                           {getTypeLabel(source.type)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right w-40">
-                        <div className="flex flex-col items-end gap-0.5">
-                          <span className="font-semibold text-base">{source.mentionRate}%</span>
-                          <span className="text-xs text-muted-foreground">
-                            {source.mentionCount} out of {source.totalAppearances} times
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center w-28">
-                        <Badge variant={getTrendVariant(source.trend)} className="gap-1">
-                          {getTrendIcon(source.trend)}
-                          {source.trend}
-                        </Badge>
+                      <TableCell className="text-right w-32">
+                        <span className="font-semibold text-base">{source.citedRate}%</span>
                       </TableCell>
                     </TableRow>
                   ))}
