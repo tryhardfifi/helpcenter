@@ -3,11 +3,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getUserCompanyId } from '@/services/userService';
 import { getDataSource } from '@/services/dataService';
 
+interface UseCompanyIdReturn {
+  companyId: string | null;
+  loading: boolean;
+}
+
 // Custom hook to get the user's companyId
-export const useCompanyId = () => {
+export const useCompanyId = (): UseCompanyIdReturn => {
   const { user } = useAuth();
-  const [companyId, setCompanyId] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchCompanyId = async () => {
