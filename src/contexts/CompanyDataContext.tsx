@@ -1,10 +1,20 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useCompanyId } from "@/hooks/useCompanyId";
 import { getCompany, getCompanyPrompts, getCompanyArticles, fetchAnalyticsForDashboard } from "@/services/dataService";
 
-const CompanyDataContext = createContext();
+interface CompanyDataContextType {
+  company: any;
+  prompts: any[];
+  articles: any[];
+  analytics: any;
+  loading: boolean;
+  error: any;
+  refetch: () => void;
+}
 
-export const useCompanyData = () => {
+const CompanyDataContext = createContext<CompanyDataContextType | undefined>(undefined);
+
+export const useCompanyData = (): CompanyDataContextType => {
   const context = useContext(CompanyDataContext);
   if (!context) {
     throw new Error("useCompanyData must be used within a CompanyDataProvider");
@@ -12,14 +22,18 @@ export const useCompanyData = () => {
   return context;
 };
 
-export const CompanyDataProvider = ({ children }) => {
+interface CompanyDataProviderProps {
+  children: ReactNode;
+}
+
+export const CompanyDataProvider = ({ children }: CompanyDataProviderProps) => {
   const { companyId, loading: loadingCompanyId } = useCompanyId();
-  const [company, setCompany] = useState(null);
-  const [prompts, setPrompts] = useState([]);
-  const [articles, setArticles] = useState([]);
-  const [analytics, setAnalytics] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [company, setCompany] = useState<any>(null);
+  const [prompts, setPrompts] = useState<any[]>([]);
+  const [articles, setArticles] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<any>(null);
 
   const fetchData = async () => {
     if (loadingCompanyId || !companyId) return;
