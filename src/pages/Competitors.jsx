@@ -45,7 +45,17 @@ const Competitors = () => {
       };
     });
 
-    return competitors;
+    // Calculate visibility rank (1 = highest score)
+    const sortedByVisibility = [...competitors].sort((a, b) => b.visibilityScore - a.visibilityScore);
+    sortedByVisibility.forEach((comp, index) => {
+      const originalComp = competitors.find(c => c.id === comp.id);
+      if (originalComp) {
+        originalComp.visibilityRank = index + 1;
+      }
+    });
+
+    // Sort by visibility rank for display
+    return competitors.sort((a, b) => a.visibilityRank - b.visibilityRank);
   }, [company, analytics]);
 
   // Prepare data for mention rate chart (top 5)
@@ -108,9 +118,9 @@ const Competitors = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Company</TableHead>
-                  <TableHead className="text-right">Visibility Score</TableHead>
-                  <TableHead className="text-right">Mention Rate (%)</TableHead>
-                  <TableHead className="text-right">Average Rank</TableHead>
+                  <TableHead className="text-right w-32">Visibility Rank</TableHead>
+                  <TableHead className="text-right w-32">Mentioned</TableHead>
+                  <TableHead className="text-right w-32">Avg. Position</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -126,13 +136,13 @@ const Competitors = () => {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {competitor.visibilityScore.toFixed(1)}
+                    <TableCell className="text-right font-semibold w-32">
+                      {competitor.visibilityRank}
                     </TableCell>
-                    <TableCell className="text-right font-semibold">
+                    <TableCell className="text-right font-semibold w-32">
                       {competitor.mentionRate.toFixed(1)}%
                     </TableCell>
-                    <TableCell className="text-right font-semibold">
+                    <TableCell className="text-right font-semibold w-32">
                       {competitor.averageRank > 0 ? competitor.averageRank : 'N/A'}
                     </TableCell>
                   </TableRow>
@@ -148,7 +158,7 @@ const Competitors = () => {
         {/* Mention Rate Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Mention Rate</CardTitle>
+            <CardTitle>Mentioned</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={400}>
@@ -165,7 +175,7 @@ const Competitors = () => {
                 <YAxis
                   stroke="#000"
                   style={{ fontSize: '12px' }}
-                  label={{ value: 'Mention Rate (%)', angle: -90, position: 'insideLeft' }}
+                  label={{ value: 'Mentioned (%)', angle: -90, position: 'insideLeft' }}
                 />
                 <Tooltip
                   contentStyle={{
@@ -173,7 +183,7 @@ const Competitors = () => {
                     border: '1px solid #e5e5e5',
                     borderRadius: '6px'
                   }}
-                  formatter={(value) => [`${value.toFixed(1)}%`, 'Mention Rate']}
+                  formatter={(value) => [`${value.toFixed(1)}%`, 'Mentioned']}
                 />
                 <Bar dataKey="mentionRate" radius={[8, 8, 0, 0]}>
                   {mentionRateChartData.map((entry, index) => (
@@ -188,7 +198,7 @@ const Competitors = () => {
         {/* Average Rank Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Average Rank</CardTitle>
+            <CardTitle>Average Position</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={400}>
@@ -205,7 +215,7 @@ const Competitors = () => {
                 <YAxis
                   stroke="#000"
                   style={{ fontSize: '12px' }}
-                  label={{ value: 'Average Rank', angle: -90, position: 'insideLeft' }}
+                  label={{ value: 'Avg. Position', angle: -90, position: 'insideLeft' }}
                   domain={[0, 10]}
                   ticks={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
                   tickFormatter={(value) => (value > 0 ? 11 - value : '')}
@@ -216,7 +226,7 @@ const Competitors = () => {
                     border: '1px solid #e5e5e5',
                     borderRadius: '6px'
                   }}
-                  formatter={(value, name, props) => [`Rank #${props.payload.averageRank}`, 'Average Rank']}
+                  formatter={(value, name, props) => [`Rank #${props.payload.averageRank}`, 'Avg. Position']}
                 />
                 <Bar dataKey="invertedRank" radius={[8, 8, 0, 0]}>
                   {averageRankChartData.map((entry, index) => (
