@@ -254,51 +254,150 @@ export const getArticleById = async (companyId, articleId) => {
 };
 
 // Competitor operations
-export const createCompetitor = async (companyId, competitorUrl) => {
+/**
+ * Get all competitors for a company from the competitors subcollection
+ */
+export const getCompanyCompetitors = async (companyId) => {
   if (useMockData) {
-    // For mock mode, just simulate success
-    console.log("Mock mode: Would create competitor with URL:", competitorUrl);
-    return {
-      id: `competitor-${Date.now()}`,
-      url: competitorUrl,
-      name: new URL(competitorUrl).hostname,
-      createdAt: new Date().toISOString(),
-    };
+    const mockCompany = getMockCompany("acme-inc-123");
+    return mockCompany?.competitors || [];
   }
 
   if (!companyId) {
-    console.warn("No companyId provided to createCompetitor");
-    throw new Error("Company ID is required");
+    console.warn("No companyId provided to getCompanyCompetitors");
+    return [];
   }
 
   try {
-    const companyRef = doc(db, "companies", companyId);
-    const companySnap = await getDoc(companyRef);
+    const competitorsRef = collection(db, "companies", companyId, "competitors");
+    const competitorsSnap = await getDocs(competitorsRef);
 
-    if (!companySnap.exists()) {
-      throw new Error("Company not found");
+    return competitorsSnap.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.error("Error fetching competitors from Firestore:", error);
+    return [];
+  }
+};
+
+/**
+ * Check if a competitor already exists by name (case-insensitive)
+ */
+export const findCompetitorByName = async (companyId, competitorName) => {
+  if (useMockData) {
+    const mockCompany = getMockCompany("acme-inc-123");
+    const competitors = mockCompany?.competitors || [];
+    return competitors.find(c => c.name?.toLowerCase() === competitorName.toLowerCase());
+  }
+
+  if (!companyId || !competitorName) {
+    return null;
+  }
+
+  try {
+    const competitors = await getCompanyCompetitors(companyId);
+    return competitors.find(c => c.name?.toLowerCase() === competitorName.toLowerCase());
+  } catch (error) {
+    console.error("Error finding competitor by name:", error);
+    return null;
+  }
+};
+
+/**
+ * Fetch URL for a competitor using GPT with web search
+ */
+export const fetchCompetitorUrl = async (competitorName) => {
+  try {
+    // Check if OpenAI API key is configured
+    const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
+    if (!apiKey) {
+      console.warn("OpenAI API key not configured, using fallback");
+      return `https://www.${competitorName.toLowerCase().replace(/\s+/g, '')}.com`;
     }
 
-    const companyData = companySnap.data();
-    const competitors = companyData.competitors || [];
-
-    // Create new competitor object
-    const newCompetitor = {
-      id: `competitor-${Date.now()}`,
-      url: competitorUrl,
-      name: new URL(competitorUrl).hostname,
-      createdAt: new Date().toISOString(),
-    };
-
-    // Add to competitors array
-    const updatedCompetitors = [...competitors, newCompetitor];
-
-    // Update company document
-    await updateDoc(companyRef, {
-      competitors: updatedCompetitors,
+    // Call OpenAI API with web search to find the competitor's official website
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4',
+        messages: [{
+          role: 'user',
+          content: `What is the official website URL for the company "${competitorName}"? Please respond with ONLY the URL, nothing else. Format: https://www.example.com`
+        }],
+        temperature: 0.3,
+        max_tokens: 100
+      })
     });
 
-    return newCompetitor;
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const url = data.choices[0]?.message?.content?.trim();
+
+    // Validate URL format
+    if (url && url.startsWith('http')) {
+      return url;
+    }
+
+    // Fallback if response is not a valid URL
+    return `https://www.${competitorName.toLowerCase().replace(/\s+/g, '')}.com`;
+  } catch (error) {
+    console.error("Error fetching competitor URL:", error);
+    // Fallback URL
+    return `https://www.${competitorName.toLowerCase().replace(/\s+/g, '')}.com`;
+  }
+};
+
+/**
+ * Create a new competitor in the competitors subcollection
+ */
+export const createCompetitor = async (companyId, competitorName, competitorUrl) => {
+  if (useMockData) {
+    // For mock mode, just simulate success
+    console.log("Mock mode: Would create competitor:", competitorName, competitorUrl);
+    return {
+      id: `competitor-${Date.now()}`,
+      name: competitorName,
+      url: competitorUrl,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  if (!companyId || !competitorName) {
+    console.warn("companyId and competitorName are required to create a competitor");
+    throw new Error("Company ID and competitor name are required");
+  }
+
+  try {
+    // Check if competitor already exists
+    const existing = await findCompetitorByName(companyId, competitorName);
+    if (existing) {
+      console.log(`Competitor "${competitorName}" already exists, returning existing`);
+      return existing;
+    }
+
+    // Fetch URL if not provided
+    const url = competitorUrl || await fetchCompetitorUrl(competitorName);
+
+    const competitorsRef = collection(db, "companies", companyId, "competitors");
+    const now = new Date().toISOString();
+
+    const newCompetitor = {
+      name: competitorName,
+      url: url,
+      createdAt: now,
+    };
+
+    const docRef = await addDoc(competitorsRef, newCompetitor);
+    return { id: docRef.id, ...newCompetitor };
   } catch (error) {
     console.error("Error creating competitor in Firestore:", error);
     throw error;
@@ -534,10 +633,27 @@ export const executePromptRun = async (companyId, promptId, promptData) => {
     competitorNames,
   });
 
-  // Step 2: Save the results to database
+  // Step 2: Create competitor docs in Firestore for any new competitors found
+  if (analysisResult.competitorMetrics) {
+    const competitorNamesFromAnalysis = Object.keys(analysisResult.competitorMetrics);
+
+    // Process competitors in parallel
+    await Promise.all(
+      competitorNamesFromAnalysis.map(async (competitorName) => {
+        try {
+          await createCompetitor(companyId, competitorName, null);
+        } catch (error) {
+          console.error(`Error creating competitor "${competitorName}":`, error);
+          // Continue even if one competitor fails
+        }
+      })
+    );
+  }
+
+  // Step 3: Save the results to database
   const savedRun = await savePromptRun(companyId, promptId, analysisResult);
 
-  // Step 3: Update prompt analytics from all runs
+  // Step 4: Update prompt analytics from all runs
   await updatePromptAnalytics(companyId, promptId);
 
   return savedRun;

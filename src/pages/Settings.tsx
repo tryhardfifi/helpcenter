@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCompanyData } from '@/contexts/CompanyDataContext';
-import { updateCompany, getAllPromptRuns, saveAnalytics } from '@/services/dataService';
+import { updateCompany, getAllPromptRuns, saveAnalytics, getCompanyCompetitors } from '@/services/dataService';
 import { computeDailyAnalytics } from '@/services/analyticsComputation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -89,11 +89,14 @@ const Settings = () => {
         return;
       }
 
+      // Fetch competitors from subcollection
+      const competitors = await getCompanyCompetitors(company.id);
+
       // Compute analytics
       const dailyAnalytics = computeDailyAnalytics({
         companyId: company.id,
         companyName: company.name,
-        competitors: company.competitors || [],
+        competitors: competitors,
         allPromptRuns: allRuns,
         date: dateStr
       });

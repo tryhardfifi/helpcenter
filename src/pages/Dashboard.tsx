@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useCompanyData } from '@/contexts/CompanyDataContext';
-import { getDataSource, executePromptRun, getAllPromptRuns, saveAnalytics, updateSourcesFromRuns } from '@/services/dataService';
+import { getDataSource, executePromptRun, getAllPromptRuns, saveAnalytics, updateSourcesFromRuns, getCompanyCompetitors } from '@/services/dataService';
 import { runAllPromptsAndComputeAnalytics } from '@/services/bulkPromptRunner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -67,12 +67,15 @@ const Dashboard = () => {
     }
 
     console.log('🚀 Starting Run All Prompts...');
-    console.log('Company:', company.name, 'Prompts:', prompts.length, 'Competitors:', analytics?.competitors?.length || 0);
 
     setRunningAllPrompts(true);
     setBulkRunProgress({ current: 0, total: prompts.length });
 
     try {
+      // Fetch competitors from subcollection
+      const competitors = await getCompanyCompetitors(company.id);
+      console.log('Company:', company.name, 'Prompts:', prompts.length, 'Competitors:', competitors.length);
+
       // Progress callback
       const onProgress = (message, current, total) => {
         console.log(`📊 Progress: ${message} (${current}/${total})`);
@@ -118,7 +121,7 @@ const Dashboard = () => {
         companyName: company.name,
         companyUrl: company.url,
         prompts: prompts,
-        competitors: analytics?.competitors || [], // Use competitors from analytics
+        competitors: competitors,
         executePromptRunFn,
         getAllRunsFn,
         saveAnalyticsFn,
