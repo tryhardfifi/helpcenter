@@ -1,7 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import { DataSourceProvider } from './contexts/DataSourceContext';
-import { CompanyDataProvider } from './contexts/CompanyDataContext';
+import { AppInitializer } from './components/AppInitializer';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Home from './pages/Home';
 import Pricing from './pages/Pricing';
@@ -17,41 +15,37 @@ import AppLayout from './components/layout/AppLayout';
 
 function App() {
   return (
-    <AuthProvider>
-      <DataSourceProvider>
-        <CompanyDataProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/login" element={<Login />} />
-              <Route
-                path="/onboarding"
-                element={
-                  <ProtectedRoute>
-                    <Onboarding />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                element={
-                  <ProtectedRoute>
-                    <AppLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/prompts" element={<Prompts />} />
-                <Route path="/prompts/:id" element={<PromptDetailPage />} />
-                <Route path="/sources" element={<Sources />} />
-                <Route path="/competitors" element={<Competitors />} />
-                <Route path="/settings" element={<Settings />} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
-        </CompanyDataProvider>
-      </DataSourceProvider>
-    </AuthProvider>
+    <BrowserRouter>
+      <AppInitializer>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/onboarding"
+            element={
+              <ProtectedRoute>
+                <Onboarding />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/prompts" element={<Prompts />} />
+            <Route path="/prompts/:id" element={<PromptDetailPage />} />
+            <Route path="/sources" element={<Sources />} />
+            <Route path="/competitors" element={<Competitors />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
+        </Routes>
+      </AppInitializer>
+    </BrowserRouter>
   );
 }
 

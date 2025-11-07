@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useCompanyData } from '@/contexts/CompanyDataContext';
+import { useCompanyDataStore } from '@/stores';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -14,7 +14,9 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { getBarColor } from '@/lib/colors';
 
 const Competitors = () => {
-  const { company, analytics, loading } = useCompanyData();
+  const company = useCompanyDataStore((state) => state.company);
+  const analytics = useCompanyDataStore((state) => state.analytics);
+  const loading = useCompanyDataStore((state) => state.loading);
 
   // Process competitor data from analytics
   const competitorData = useMemo(() => {

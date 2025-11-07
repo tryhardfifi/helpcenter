@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useCompanyData } from '@/contexts/CompanyDataContext';
+import { useCompanyDataStore } from '@/stores';
 import { getDataSource, executePromptRun, getAllPromptRuns, saveAnalytics, updateSourcesFromRuns, getCompanyCompetitors } from '@/services/dataService';
 import { runAllPromptsAndComputeAnalytics } from '@/services/bulkPromptRunner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,11 @@ import AttributionTable from '@/components/dashboard/AttributionTable';
 import TopPromptsTable from '@/components/dashboard/TopPromptsTable';
 
 const Dashboard = () => {
-  const { company, prompts, analytics, loading, refetch } = useCompanyData();
+  const company = useCompanyDataStore((state) => state.company);
+  const prompts = useCompanyDataStore((state) => state.prompts);
+  const analytics = useCompanyDataStore((state) => state.analytics);
+  const loading = useCompanyDataStore((state) => state.loading);
+  const refetch = useCompanyDataStore((state) => state.refetch);
   const [activeKPI, setActiveKPI] = useState('visibilityRank');
   const [runningAllPrompts, setRunningAllPrompts] = useState(false);
   const [bulkRunProgress, setBulkRunProgress] = useState({ current: 0, total: 0 });

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useCompanyData } from '@/contexts/CompanyDataContext';
+import { useCompanyDataStore } from '@/stores';
 import { updateCompany, getAllPromptRuns, saveAnalytics, getCompanyCompetitors } from '@/services/dataService';
 import { computeDailyAnalytics } from '@/services/analyticsComputation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,7 +11,9 @@ import { Separator } from '@/components/ui/separator';
 import { Building2, CreditCard, Users, Save, Plus, Trash2, Edit2, X, BarChart3 } from 'lucide-react';
 
 const Settings = () => {
-  const { company, loading, refetch } = useCompanyData();
+  const company = useCompanyDataStore((state) => state.company);
+  const loading = useCompanyDataStore((state) => state.loading);
+  const refetch = useCompanyDataStore((state) => state.refetch);
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [website, setWebsite] = useState('');

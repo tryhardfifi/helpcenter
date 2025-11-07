@@ -1,8 +1,9 @@
-import { useDataSource } from '@/contexts/DataSourceContext';
+import { useDataSourceStore } from '@/stores';
 import { Database, HardDrive } from 'lucide-react';
 
 const DataSourceToggle = () => {
-  const { useMockData, toggleDataSource } = useDataSource();
+  const useMockData = useDataSourceStore((state) => state.useMockData);
+  const toggleDataSource = useDataSourceStore((state) => state.toggleDataSource);
 
   return (
     <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">

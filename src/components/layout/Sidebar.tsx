@@ -1,7 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, FileText, LogOut, Building2, Globe, ChevronDown, Settings } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCompanyData } from '@/contexts/CompanyDataContext';
+import { useAuthStore, useCompanyDataStore } from '@/stores';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -17,8 +16,9 @@ import { cn } from '@/lib/utils';
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const { company } = useCompanyData();
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const company = useCompanyDataStore((state) => state.company);
 
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useCompanyData } from '@/contexts/CompanyDataContext';
+import { useCompanyDataStore } from '@/stores';
 import { getCompanySources } from '@/services/dataService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -17,7 +17,10 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { getDomainColor } from '@/lib/colors';
 
 const Sources = () => {
-  const { company, prompts, analytics, loading } = useCompanyData();
+  const company = useCompanyDataStore((state) => state.company);
+  const prompts = useCompanyDataStore((state) => state.prompts);
+  const analytics = useCompanyDataStore((state) => state.analytics);
+  const loading = useCompanyDataStore((state) => state.loading);
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [sources, setSources] = useState([]);
   const [sourcesLoading, setSourcesLoading] = useState(true);

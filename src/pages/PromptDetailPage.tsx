@@ -3,13 +3,14 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useCompanyData } from '@/contexts/CompanyDataContext';
+import { useCompanyDataStore } from '@/stores';
 import { getDataSource } from '@/services/dataService';
 import PromptDetail from '@/components/prompts/PromptDetail';
 
 const PromptDetailPage = () => {
   const { id } = useParams();
-  const { prompts, loading } = useCompanyData();
+  const prompts = useCompanyDataStore((state) => state.prompts);
+  const loading = useCompanyDataStore((state) => state.loading);
   const [selectedRun, setSelectedRun] = useState(null);
 
   // Find the prompt from cached data

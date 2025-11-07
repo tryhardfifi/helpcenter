@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { create } from 'zustand';
 import {
   signInWithEmailAndPassword,
   signOut,
@@ -8,45 +8,37 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { AuthContextType, AuthResponse, OnboardingStatus, UserData } from '@/types';
+import { AuthResponse, OnboardingStatus, UserData } from '@/types';
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-interface AuthProviderProps {
-  children: ReactNode;
+interface AuthStore {
+  user: FirebaseUser | null;
+  loading: boolean;
+  setUser: (user: FirebaseUser | null) => void;
+  setLoading: (loading: boolean) => void;
+  login: (email: string, password: string) => Promise<AuthResponse>;
+  signup: (email: string, password: string) => Promise<AuthResponse>;
+  logout: () => Promise<AuthResponse>;
+  checkOnboardingStatus: (userEmail: string) => Promise<OnboardingStatus>;
+  initialize: () => () => void;
 }
 
-export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+export const useAuthStore = create<AuthStore>((set, get) => ({
+  user: null,
+  loading: true,
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      setLoading(false);
-    });
+  setUser: (user) => set({ user }),
+  setLoading: (loading) => set({ loading }),
 
-    return unsubscribe;
-  }, []);
-
-  const login = async (email: string, password: string): Promise<AuthResponse> => {
+  login: async (email: string, password: string): Promise<AuthResponse> => {
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       return { success: true, user: result.user };
     } catch (error: any) {
       return { success: false, error: error.message };
     }
-  };
+  },
 
-  const signup = async (email: string, password: string): Promise<AuthResponse> => {
+  signup: async (email: string, password: string): Promise<AuthResponse> => {
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
 
@@ -64,18 +56,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error: any) {
       return { success: false, error: error.message };
     }
-  };
+  },
 
-  const logout = async (): Promise<AuthResponse> => {
+  logout: async (): Promise<AuthResponse> => {
     try {
       await signOut(auth);
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message };
     }
-  };
+  },
 
-  const checkOnboardingStatus = async (userEmail: string): Promise<OnboardingStatus> => {
+  checkOnboardingStatus: async (userEmail: string): Promise<OnboardingStatus> => {
     try {
       const userRef = doc(db, 'users', userEmail);
       const userSnap = await getDoc(userRef);
@@ -97,20 +89,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.error('Error checking onboarding status:', error);
       return { needsOnboarding: true, hasCompany: false };
     }
-  };
+  },
 
-  const value = {
-    user,
-    loading,
-    login,
-    signup,
-    logout,
-    checkOnboardingStatus,
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
-    </AuthContext.Provider>
-  );
-};
+  initialize: () => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      set({ user: firebaseUser, loading: false });
+    });
+    return unsubscribe;
+  }
+}));

@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthStore } from '@/stores';
 import LoginForm from '@/components/auth/LoginForm';
 
 const Login = () => {
-  const { user } = useAuth();
+  const user = useAuthStore((state) => state.user);
   const navigate = useNavigate();
 
   useEffect(() => {

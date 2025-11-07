@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
-import { useCompanyData } from '@/contexts/CompanyDataContext';
+import { useCompanyDataStore } from '@/stores';
 import { useCompanyId } from '@/hooks/useCompanyId';
 import { getDataSource, createPrompt, deletePrompt } from '@/services/dataService';
 import { formatRelativeTime } from '@/utils/dateUtils';
@@ -37,7 +37,9 @@ import {
 import { Database, Plus, Trash2 } from 'lucide-react';
 
 const Prompts = () => {
-  const { prompts, loading, refetch } = useCompanyData();
+  const prompts = useCompanyDataStore((state) => state.prompts);
+  const loading = useCompanyDataStore((state) => state.loading);
+  const refetch = useCompanyDataStore((state) => state.refetch);
   const { companyId } = useCompanyId();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [promptText, setPromptText] = useState('');

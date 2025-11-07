@@ -21,12 +21,13 @@ import ConversationWithCitations from './ConversationWithCitations';
 import { ChevronLeft, ChevronRight, ExternalLink, Calendar, Info, CheckCircle, Target } from 'lucide-react';
 import { getPromptRuns } from '@/services/dataService';
 import { useCompanyId } from '@/hooks/useCompanyId';
-import { useCompanyData } from '@/contexts/CompanyDataContext';
+import { useCompanyDataStore } from '@/stores';
 import { format } from 'date-fns';
 
 const PromptDetail = ({ prompt, selectedRun, setSelectedRun }) => {
   const { companyId } = useCompanyId();
-  const { company, analytics } = useCompanyData();
+  const company = useCompanyDataStore((state) => state.company);
+  const analytics = useCompanyDataStore((state) => state.analytics);
   const [runs, setRuns] = useState([]);
   const [runsLoading, setRunsLoading] = useState(true);
   const [chartData, setChartData] = useState({ mentions: [], rankings: [] });

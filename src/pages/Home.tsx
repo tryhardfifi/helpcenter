@@ -1,12 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthStore } from '@/stores';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
     if (user) {

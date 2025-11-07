@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthStore } from '@/stores';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +12,9 @@ const LoginForm = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
-  const { login, signup, checkOnboardingStatus } = useAuth();
+  const login = useAuthStore((state) => state.login);
+  const signup = useAuthStore((state) => state.signup);
+  const checkOnboardingStatus = useAuthStore((state) => state.checkOnboardingStatus);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
